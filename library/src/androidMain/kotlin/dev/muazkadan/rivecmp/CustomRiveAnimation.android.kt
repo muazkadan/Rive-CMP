@@ -5,7 +5,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import app.rive.runtime.kotlin.RiveAnimationView
 import app.rive.runtime.kotlin.core.Alignment
+import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 
+@ExperimentalRiveCmpApi
 @Composable
 actual fun CustomRiveAnimation(
     modifier: Modifier,
