@@ -1,11 +1,19 @@
 # Rive CMP
 
-A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to use rive-android and rive-ios seamlessly across Android and iOS platforms.
+![Maven Central Version](https://img.shields.io/maven-central/v/dev.muazkadan/rive-cmp)
+[![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
+[![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to
+use rive-android and rive-ios seamlessly across Android and iOS platforms.
 
 > **⚠️ EXPERIMENTAL STATUS**
-> 
-> This library is currently in an experimental state. Features, APIs, and implementation details may change significantly or the project might be discontinued. Use at your own risk in production applications.
-> 
+>
+> This library is currently in an experimental state. Features, APIs, and implementation details may
+> change significantly or the project might be discontinued. Use at your own risk in production
+> applications.
+>
 > **Current Limitations:**
 > - Currently only supports loading animations from URLs
 > - Not all features and properties from the native Rive libraries are supported yet
@@ -21,16 +29,24 @@ A Compose Multiplatform wrapper library for integrating Rive animations, providi
 
 ## Platform Support
 
-| Platform | Implementation | Dependency |
-|----------|----------------|------------|
-| Android  | Native rive-android | `app.rive.runtime.kotlin` |
-| iOS      | Swift Package Manager | `rive-ios` via spm4kmp |
+| Platform | Implementation        | Dependency                |
+|----------|-----------------------|---------------------------|
+| Android  | Native rive-android   | `app.rive.runtime.kotlin` |
+| iOS      | Swift Package Manager | `rive-ios` via spm4kmp    |
 
 ## Installation
 
 ### Gradle (Kotlin Multiplatform)
 
 Add the dependency to your `build.gradle.kts`:
+
+```kotlin
+commonMain.dependencies {
+    implementation("dev.muazkadan:rive-cmp:0.0.1")
+}
+```
+
+### Android-only projects
 
 ```kotlin
 dependencies {
@@ -86,12 +102,14 @@ fun CustomRiveAnimation(
 ## Requirements
 
 ### Android
+
 - Minimum SDK: 21
 - Target SDK: 34
 - Kotlin: 1.9+
 - Compose: 1.5+
 
 ### iOS
+
 - Minimum iOS: 14.0
 - Xcode: 15+
 - Swift: 5.9+
@@ -99,6 +117,7 @@ fun CustomRiveAnimation(
 ## Building
 
 This library uses Kotlin Multiplatform with the following plugins:
+
 - `kotlinMultiplatform`
 - `androidLibrary`
 - `composeMultiplatform`
@@ -152,6 +171,7 @@ limitations under the License.
 ## Author
 
 **Muaz KADAN**
+
 - Website: [muazkadan.dev](https://muazkadan.dev/)
 - Email: muaz.kadan@gmail.com
 - GitHub: [@muazkadan](https://github.com/muazkadan)
@@ -162,5 +182,3 @@ limitations under the License.
 - [rive-android](https://github.com/rive-app/rive-android) for Android implementation
 - [rive-ios](https://github.com/rive-app/rive-ios) for iOS implementation
 - [spm4kmp](https://github.com/frankois944/spm4kmp) for Swift Package Manager integration
-
-
