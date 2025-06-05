@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalSpmForKmpFeature::class)
+
 import com.vanniktech.maven.publish.SonatypeHost
+import io.github.frankois944.spmForKmp.utils.ExperimentalSpmForKmpFeature
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.net.URI
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -8,6 +12,7 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.spmForKmp)
 }
 
 group = "dev.muazkadan"
@@ -28,6 +33,11 @@ kotlin {
         it.binaries.framework {
             baseName = "RiveCMP"
             isStatic = true
+        }
+        it.compilations {
+            val main by getting {
+                cinterops.create("nativeIosShared")
+            }
         }
     }
 
@@ -96,6 +106,24 @@ mavenPublishing {
             url = "https://github.com/muazkadan/Rive-CMP"
             connection = "scm:git:git://github.com/muazkadan/Rive-CMP.git"
             developerConnection = "scm:git:ssh://github.com/muazkadan/Rive-CMP.git"
+        }
+    }
+}
+
+swiftPackageConfig {
+    create("nativeIosShared") {
+        minIos = "14.0"
+        spmWorkingPath =
+            "${projectDir.resolve("SPM")}" // change the Swift Package Manager working Dir
+        copyDependenciesToApp = true
+        dependency {
+            remotePackageVersion(
+                url = URI("https://github.com/rive-app/rive-ios.git"),
+                version = "6.9.3",
+                products = {
+                    add("RiveRuntime", isIncludedInExportedPackage = false, exportToKotlin = true)
+                },
+            )
         }
     }
 }
