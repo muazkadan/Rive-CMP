@@ -6,12 +6,16 @@ android-compileSdk = "36"
 compose-multiplatform = "1.8.1"
 compose-activity = "1.10.1"
 androidx-lifecycle = "2.9.0"
+rive-android = "10.1.5"
+androidx-startup = "1.2.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "compose-activity" }
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+rive-android = { group = "app.rive", name = "rive-android", version.ref = "rive-android" }
+androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
