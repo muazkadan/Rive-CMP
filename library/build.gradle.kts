@@ -35,7 +35,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.rive.android)
-            implementation(libs.androidx.startup)
+            api(libs.androidx.startup)
         }
 
         commonMain.dependencies {
