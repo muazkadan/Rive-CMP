@@ -1,11 +1,12 @@
 package dev.muazkadan.rivecmp
 
-import RiveRuntime.RiveAlignment
 import RiveRuntime.RiveViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
+import dev.muazkadan.rivecmp.core.RiveAlignment
+import dev.muazkadan.rivecmp.core.toIosAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.core.toIosFit
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
@@ -17,6 +18,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 actual fun CustomRiveAnimation(
     modifier: Modifier,
     url: String,
+    alignment: RiveAlignment,
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
@@ -28,7 +30,7 @@ actual fun CustomRiveAnimation(
             stateMachineName = stateMachineName,
             fit = fit.toIosFit(),
             autoPlay = autoPlay,
-            alignment = RiveAlignment.center,
+            alignment = alignment.toIosAlignment(),
             loadCdn = false,
             artboardName = artboardName
         )
