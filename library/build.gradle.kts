@@ -34,6 +34,8 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
+            implementation(libs.rive.android)
+            implementation(libs.androidx.startup)
         }
 
         commonMain.dependencies {
@@ -72,7 +74,8 @@ mavenPublishing {
 
     pom {
         name = "Rive CMP"
-        description = "A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to use rive-android and rive-ios seamlessly across Android and iOS platforms."
+        description =
+            "A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to use rive-android and rive-ios seamlessly across Android and iOS platforms."
         inceptionYear = "2025"
         url = "https://github.com/muazkadan/Rive-CMP"
         licenses {
