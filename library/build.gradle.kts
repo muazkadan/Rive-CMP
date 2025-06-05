@@ -32,10 +32,16 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                //put your multiplatform dependencies here
-            }
+        androidMain.dependencies {
+            implementation(compose.preview)
+        }
+
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(compose.components.uiToolingPreview)
         }
         val commonTest by getting {
             dependencies {
@@ -89,4 +95,8 @@ mavenPublishing {
             developerConnection = "scm:git:ssh://github.com/muazkadan/Rive-CMP.git"
         }
     }
+}
+
+dependencies {
+    debugImplementation(compose.uiTooling)
 }
