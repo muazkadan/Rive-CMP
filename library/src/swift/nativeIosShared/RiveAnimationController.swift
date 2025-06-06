@@ -9,12 +9,12 @@ import RiveRuntime
     private var viewModel: RiveViewModel?
     private var riveView: RiveView?
     private var pendingConfiguration: (url: String, autoPlay: Bool, artboardName: String?, stateMachineName: String?, fit: RiveFit, alignment: RiveAlignment)?
-    
+
     override init() {
         super.init()
     }
-    
-    public func setAnimationItemWithUrl(
+
+    public func setAnimationItem(
         url: String,
         autoPlay: Bool,
         artboardName: String?,
@@ -24,7 +24,7 @@ import RiveRuntime
     ) {
         // Store configuration for deferred creation
         pendingConfiguration = (url, autoPlay, artboardName, stateMachineName, fit, alignment)
-        
+
         // Clean up previous resources
         releaseAnimation()
 
@@ -44,12 +44,66 @@ import RiveRuntime
             createRiveViewIfNeeded()
         }
     }
-    
+
+    public func setAnimationItem(
+        data: NSData,
+        autoPlay: Bool,
+        artboardName: String?,
+        stateMachineName: String?,
+        fit: RiveFit,
+        alignment: RiveAlignment
+    ) {
+        // Clean up previous resources
+        releaseAnimation()
+
+        do {
+
+            // Create RiveFile from NSData
+            let riveFile = try RiveFile(data: data as Data, loadCdn: true)
+
+            // Create RiveModel from RiveFile
+            let riveModel = RiveModel(riveFile: riveFile)
+
+            // Set artboard if specified
+            if let artboardName = artboardName {
+                try riveModel.setArtboard(artboardName)
+            }
+
+            // Create RiveViewModel from RiveModel
+            if let stateMachineName = stateMachineName {
+                viewModel = RiveViewModel(
+                    riveModel,
+                    stateMachineName: stateMachineName,
+                    fit: fit,
+                    alignment: alignment,
+                    autoPlay: autoPlay,
+                    artboardName: artboardName
+                )
+            } else {
+                viewModel = RiveViewModel(
+                    riveModel,
+                    animationName: nil,
+                    fit: fit,
+                    alignment: alignment,
+                    autoPlay: autoPlay,
+                    artboardName: artboardName
+                )
+            }
+
+            // If view was already requested, create it now
+            if riveView == nil {
+                createRiveViewIfNeeded()
+            }
+        } catch {
+            print("RiveAnimationController: ERROR - Failed to create RiveFile from data: \(error)")
+        }
+    }
+
     private func createRiveViewIfNeeded() {
         guard let vm = viewModel else {
             return
         }
-        
+
         riveView = vm.createRiveView()
         riveView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     }
@@ -59,12 +113,12 @@ import RiveRuntime
         if viewModel != nil && riveView == nil {
             createRiveViewIfNeeded()
         }
-        
+
         // If we have a view, return it
         if let view = riveView {
             return view
         }
-        
+
         // If no viewModel yet, return a placeholder and wait for configuration
         let placeholderView = RiveView()
         placeholderView.backgroundColor = UIColor.clear
@@ -76,7 +130,7 @@ import RiveRuntime
         if viewModel != nil && riveView == nil {
             createRiveViewIfNeeded()
         }
-        
+
         guard let vm = viewModel, let storedView = riveView else {
             return
         }

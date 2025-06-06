@@ -44,3 +44,39 @@ actual fun CustomRiveAnimation(
         }
     )
 }
+
+@ExperimentalRiveCmpApi
+@Composable
+actual fun CustomRiveAnimation(
+    modifier: Modifier,
+    byteArray: ByteArray,
+    alignment: RiveAlignment,
+    autoPlay: Boolean,
+    artboardName: String?,
+    fit: RiveFit,
+    stateMachineName: String?
+) {
+
+    AndroidView(
+        modifier = modifier,
+        factory = { context ->
+            val builder = RiveAnimationView.Builder(context)
+                .setResource(byteArray)
+                .setAlignment(alignment.toAndroidAlignment())
+                .setFit(fit.toAndroidFit())
+                .setAutoplay(autoPlay)
+
+            // Set artboard name if provided
+            artboardName?.let {
+                builder.setArtboardName(it)
+            }
+
+            // Set state machine name if provided
+            stateMachineName?.let {
+                builder.setStateMachineName(it)
+            }
+
+            builder.build()
+        }
+    )
+}
