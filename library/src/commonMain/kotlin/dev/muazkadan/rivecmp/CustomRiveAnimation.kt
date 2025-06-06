@@ -17,3 +17,15 @@ expect fun CustomRiveAnimation(
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
 )
+
+@ExperimentalRiveCmpApi
+@Composable
+expect fun CustomRiveAnimation(
+    modifier: Modifier = Modifier,
+    byteArray: ByteArray,
+    alignment: RiveAlignment = RiveAlignment.CENTER,
+    autoPlay: Boolean = true,
+    artboardName: String? = null,
+    fit: RiveFit = RiveFit.CONTAIN,
+    stateMachineName: String? = null,
+)

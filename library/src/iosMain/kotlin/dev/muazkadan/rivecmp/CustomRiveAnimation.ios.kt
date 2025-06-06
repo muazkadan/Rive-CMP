@@ -10,8 +10,13 @@ import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.core.toIosAlignment
 import dev.muazkadan.rivecmp.core.toIosFit
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import nativeIosShared.RiveAnimationController
+import platform.Foundation.NSData
+import platform.Foundation.create
 
 @OptIn(ExperimentalForeignApi::class)
 @ExperimentalRiveCmpApi
@@ -27,8 +32,60 @@ actual fun CustomRiveAnimation(
 ) {
     val animationController = remember(url, autoPlay, artboardName, fit, stateMachineName, alignment) {
         val controller = RiveAnimationController()
-        controller.setAnimationItemWithUrlWithUrl(
+        controller.setAnimationItemWithUrl(
             url = url,
+            autoPlay = autoPlay,
+            artboardName = artboardName,
+            stateMachineName = stateMachineName,
+            fit = fit.toIosFit(),
+            alignment = alignment.toIosAlignment()
+        )
+        controller
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            animationController.releaseAnimation()
+        }
+    }
+
+    UIKitView(
+        factory = {
+            animationController.createAnimationView()
+        },
+        modifier = modifier,
+        update = { view ->
+            animationController.updateView(view)
+        }
+    )
+}
+
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+@ExperimentalRiveCmpApi
+@Composable
+actual fun CustomRiveAnimation(
+    modifier: Modifier,
+    byteArray: ByteArray,
+    alignment: RiveAlignment,
+    autoPlay: Boolean,
+    artboardName: String?,
+    fit: RiveFit,
+    stateMachineName: String?
+) {
+    val animationController = remember(byteArray, autoPlay, artboardName, fit, stateMachineName, alignment) {
+        val controller = RiveAnimationController()
+
+        // Convert ByteArray to NSData
+        val nsData = byteArray.usePinned { pinned ->
+            NSData.create(
+                bytes = pinned.addressOf(0),
+                length = byteArray.size.toULong()
+            )
+        }
+
+        controller.setAnimationItemWithData(
+            data = nsData,
             autoPlay = autoPlay,
             artboardName = artboardName,
             stateMachineName = stateMachineName,
