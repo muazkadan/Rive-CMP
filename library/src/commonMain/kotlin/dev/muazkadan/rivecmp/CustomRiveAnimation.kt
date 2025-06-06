@@ -8,6 +8,46 @@ import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 
 @ExperimentalRiveCmpApi
 @Composable
+fun CustomRiveAnimation(
+    composition: RiveComposition?,
+    modifier: Modifier = Modifier,
+    alignment: RiveAlignment = RiveAlignment.CENTER,
+    autoPlay: Boolean = true,
+    artboardName: String? = null,
+    fit: RiveFit = RiveFit.CONTAIN,
+    stateMachineName: String? = null,
+) {
+    if (composition != null) {
+        when (val spec = composition.spec) {
+            is RiveUrlCompositionSpec -> {
+                CustomRiveAnimation(
+                    modifier = modifier,
+                    url = spec.url,
+                    alignment = alignment,
+                    autoPlay = autoPlay,
+                    artboardName = artboardName,
+                    fit = fit,
+                    stateMachineName = stateMachineName
+                )
+            }
+
+            is RiveByteArrayCompositionSpec -> {
+                CustomRiveAnimation(
+                    modifier = modifier,
+                    byteArray = spec.byteArray,
+                    alignment = alignment,
+                    autoPlay = autoPlay,
+                    artboardName = artboardName,
+                    fit = fit,
+                    stateMachineName = stateMachineName
+                )
+            }
+        }
+    }
+}
+
+@ExperimentalRiveCmpApi
+@Composable
 expect fun CustomRiveAnimation(
     modifier: Modifier = Modifier,
     url: String,

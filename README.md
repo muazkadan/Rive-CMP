@@ -15,17 +15,17 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 > applications.
 >
 > **Current Limitations:**
-> - Currently only supports loading animations from URLs
 > - Not all features and properties from the native Rive libraries are supported yet
-> - Additional features like local file loading coming in future releases
+> - Some advanced Rive features may not be available across all platforms
 
 ## Features
 
 - **Unified API**: Single `CustomRiveAnimation` composable that works across Android and iOS
+- **Multiple Loading Options**: Load animations from URLs or local ByteArray/resources
 - **Native Performance**: Uses platform-specific Rive implementations for optimal performance
 - **Easy Integration**: Simple Compose-style API with familiar modifier patterns
 - **State Machine Support**: Support for Rive state machines on both platforms
-- **Flexible Configuration**: Customizable alignment, fit, and playback options
+- **Flexible Configuration**: Customizable alignment, fit, artboard selection, and playback options
 
 ## Platform Support
 
@@ -68,9 +68,13 @@ rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
 
 ## Basic Usage
 
+### Loading from URL
+
 ```kotlin
 import dev.muazkadan.rivecmp.CustomRiveAnimation
+import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 
+@OptIn(ExperimentalRiveCmpApi::class)
 @Composable
 fun MyScreen() {
     CustomRiveAnimation(
@@ -80,23 +84,73 @@ fun MyScreen() {
 }
 ```
 
-## API Reference
-
-### CustomRiveAnimation
+### Loading from Resources/ByteArray
 
 ```kotlin
+import dev.muazkadan.rivecmp.CustomRiveAnimation
+import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
+
+@OptIn(ExperimentalRiveCmpApi::class)
+@Composable
+fun MyScreen() {
+    var resourceAnimation by remember { mutableStateOf<ByteArray?>(null) }
+    
+    LaunchedEffect(Unit) {
+        resourceAnimation = Res.readBytes("files/your_animation.riv")
+    }
+    
+    resourceAnimation?.let { byteArray ->
+        CustomRiveAnimation(
+            modifier = Modifier.size(200.dp),
+            byteArray = byteArray
+        )
+    }
+}
+```
+
+## API Reference
+
+### CustomRiveAnimation (URL-based)
+
+```kotlin
+@ExperimentalRiveCmpApi
 @Composable
 fun CustomRiveAnimation(
     modifier: Modifier = Modifier,
     url: String,
-    stateMachineName: String? = null
+    alignment: RiveAlignment = RiveAlignment.CENTER,
+    autoPlay: Boolean = true,
+    artboardName: String? = null,
+    fit: RiveFit = RiveFit.CONTAIN,
+    stateMachineName: String? = null,
+)
+```
+
+### CustomRiveAnimation (ByteArray-based)
+
+```kotlin
+@ExperimentalRiveCmpApi
+@Composable
+fun CustomRiveAnimation(
+    modifier: Modifier = Modifier,
+    byteArray: ByteArray,
+    alignment: RiveAlignment = RiveAlignment.CENTER,
+    autoPlay: Boolean = true,
+    artboardName: String? = null,
+    fit: RiveFit = RiveFit.CONTAIN,
+    stateMachineName: String? = null,
 )
 ```
 
 #### Parameters
 
 - `modifier`: Compose modifier for styling and layout
-- `url`: Url to the Rive animation file
+- `url`: URL to the Rive animation file
+- `byteArray`: ByteArray containing the Rive animation data
+- `alignment`: How the animation should be aligned within its container (default: `RiveAlignment.CENTER`)
+- `autoPlay`: Whether the animation should start playing automatically (default: `true`)
+- `artboardName`: Optional name of the specific artboard to use
+- `fit`: How the animation should fit within its container (default: `RiveFit.CONTAIN`)
 - `stateMachineName`: Optional name of the state machine to use
 
 ## Requirements
