@@ -121,7 +121,7 @@ swiftPackageConfig {
                 url = URI("https://github.com/rive-app/rive-ios.git"),
                 version = "6.9.3",
                 products = {
-                    add("RiveRuntime", isIncludedInExportedPackage = false, exportToKotlin = true)
+                    add("RiveRuntime")
                 },
             )
         }

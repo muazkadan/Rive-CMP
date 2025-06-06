@@ -1,16 +1,17 @@
 package dev.muazkadan.rivecmp
 
-import RiveRuntime.RiveViewModel
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import dev.muazkadan.rivecmp.core.RiveAlignment
-import dev.muazkadan.rivecmp.core.toIosAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
+import dev.muazkadan.rivecmp.core.toIosAlignment
 import dev.muazkadan.rivecmp.core.toIosFit
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import nativeIosShared.RiveAnimationController
 
 @OptIn(ExperimentalForeignApi::class)
 @ExperimentalRiveCmpApi
@@ -24,24 +25,32 @@ actual fun CustomRiveAnimation(
     fit: RiveFit,
     stateMachineName: String?
 ) {
-    val viewModel = remember(url, autoPlay, artboardName, fit, stateMachineName) {
-        RiveViewModel(
-            webURL = url,
+    val animationController = remember(url, autoPlay, artboardName, fit, stateMachineName, alignment) {
+        val controller = RiveAnimationController()
+        controller.setAnimationItemWithUrlWithUrl(
+            url = url,
+            autoPlay = autoPlay,
+            artboardName = artboardName,
             stateMachineName = stateMachineName,
             fit = fit.toIosFit(),
-            autoPlay = autoPlay,
-            alignment = alignment.toIosAlignment(),
-            loadCdn = false,
-            artboardName = artboardName
+            alignment = alignment.toIosAlignment()
         )
+        controller
     }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            animationController.releaseAnimation()
+        }
+    }
+
     UIKitView(
         factory = {
-            viewModel.createRiveView()
+            animationController.createAnimationView()
         },
         modifier = modifier,
         update = { view ->
-            viewModel.updateWithView(view)
+            animationController.updateView(view)
         }
     )
 }
