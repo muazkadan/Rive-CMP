@@ -10,11 +10,15 @@ let package = Package(
       type: .static,
       targets: ["exportedNativeIosShared"])
   ],
-  dependencies: [],
+  dependencies: [
+    .package(url: "https://github.com/rive-app/rive-ios.git", exact: "6.9.3")
+  ],
   targets: [
     .target(
       name: "exportedNativeIosShared",
-      dependencies: [],
+      dependencies: [
+        .product(name: "RiveRuntime", package: "rive-ios")
+      ],
       path: "Sources"
 
     )
