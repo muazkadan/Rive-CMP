@@ -157,4 +157,16 @@ import RiveRuntime
     public func setTriggerInput(_ name: String) {
         viewModel?.triggerInput(name)
     }
+
+    public func pause() {
+        viewModel?.pause()
+    }
+
+    public func reset() {
+        viewModel?.reset()
+    }
+
+    public func stop() {
+        viewModel?.stop()
+    }
 }

@@ -24,6 +24,18 @@ actual class RiveComposition internal actual constructor(
         controllerRef?.setTriggerInput(name)
     }
 
+    actual fun pause() {
+        controllerRef?.pause()
+    }
+
+    actual fun reset() {
+        controllerRef?.reset()
+    }
+
+    actual fun stop() {
+        controllerRef?.stop()
+    }
+
     internal actual fun connectToAnimationView(animationView: Any?) {
         controllerRef = animationView as? RiveAnimationController
     }

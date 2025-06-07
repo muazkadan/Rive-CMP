@@ -43,6 +43,9 @@ expect class RiveComposition internal constructor(
     fun setNumberInput(stateMachineName: String, name: String, value: Float)
     fun setBooleanInput(stateMachineName: String, name: String, value: Boolean)
     fun setTriggerInput(stateMachineName: String, name: String)
+    fun pause()
+    fun reset()
+    fun stop()
 
     internal fun connectToAnimationView(animationView: Any?)
 }

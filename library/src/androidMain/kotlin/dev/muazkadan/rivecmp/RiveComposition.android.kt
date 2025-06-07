@@ -29,6 +29,18 @@ actual class RiveComposition internal actual constructor(
         animationViewRef?.fireState(stateMachineName = stateMachineName, inputName = name)
     }
 
+    actual fun pause() {
+        animationViewRef?.pause()
+    }
+
+    actual fun reset() {
+        animationViewRef?.reset()
+    }
+
+    actual fun stop() {
+        animationViewRef?.stop()
+    }
+
     internal actual fun connectToAnimationView(animationView: Any?) {
         animationViewRef = animationView as? RiveAnimationView
     }
