@@ -18,6 +18,95 @@ import nativeIosShared.RiveAnimationController
 import platform.Foundation.NSData
 import platform.Foundation.create
 
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+@ExperimentalRiveCmpApi
+@Composable
+actual fun CustomRiveAnimation(
+    modifier: Modifier,
+    composition: RiveComposition?,
+    alignment: RiveAlignment,
+    autoPlay: Boolean,
+    artboardName: String?,
+    fit: RiveFit,
+    stateMachineName: String?
+) {
+    if (composition != null) {
+        when (val spec = composition.spec) {
+            is RiveUrlCompositionSpec -> {
+                val animationController = remember(spec.url, autoPlay, artboardName, fit, stateMachineName, alignment) {
+                    val controller = RiveAnimationController()
+                    controller.setAnimationItemWithUrl(
+                        url = spec.url,
+                        autoPlay = autoPlay,
+                        artboardName = artboardName,
+                        stateMachineName = stateMachineName,
+                        fit = fit.toIosFit(),
+                        alignment = alignment.toIosAlignment()
+                    )
+                    composition.connectToAnimationView(controller)
+                    controller
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        animationController.releaseAnimation()
+                    }
+                }
+
+                UIKitView(
+                    factory = {
+                        animationController.createAnimationView()
+                    },
+                    modifier = modifier,
+                    update = { view ->
+                        animationController.updateView(view)
+                    }
+                )
+            }
+            is RiveByteArrayCompositionSpec -> {
+                val animationController = remember(spec.byteArray, autoPlay, artboardName, fit, stateMachineName, alignment) {
+                    val controller = RiveAnimationController()
+
+                    // Convert ByteArray to NSData
+                    val nsData = spec.byteArray.usePinned { pinned ->
+                        NSData.create(
+                            bytes = pinned.addressOf(0),
+                            length = spec.byteArray.size.toULong()
+                        )
+                    }
+
+                    controller.setAnimationItemWithData(
+                        data = nsData,
+                        autoPlay = autoPlay,
+                        artboardName = artboardName,
+                        stateMachineName = stateMachineName,
+                        fit = fit.toIosFit(),
+                        alignment = alignment.toIosAlignment()
+                    )
+                    composition.connectToAnimationView(controller)
+                    controller
+                }
+
+                DisposableEffect(Unit) {
+                    onDispose {
+                        animationController.releaseAnimation()
+                    }
+                }
+
+                UIKitView(
+                    factory = {
+                        animationController.createAnimationView()
+                    },
+                    modifier = modifier,
+                    update = { view ->
+                        animationController.updateView(view)
+                    }
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalForeignApi::class)
 @ExperimentalRiveCmpApi
 @Composable

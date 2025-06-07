@@ -35,6 +35,14 @@ fun rememberRiveComposition(
     return result
 }
 
-class RiveComposition internal constructor(
+expect class RiveComposition internal constructor(
+    spec: RiveCompositionSpec
+) {
     internal val spec: RiveCompositionSpec
-)
+
+    fun setNumberInput(stateMachineName: String, name: String, value: Float)
+    fun setBooleanInput(stateMachineName: String, name: String, value: Boolean)
+    fun setTriggerInput(stateMachineName: String, name: String)
+
+    internal fun connectToAnimationView(animationView: Any?)
+}

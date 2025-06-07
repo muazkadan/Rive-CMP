@@ -145,4 +145,16 @@ import RiveRuntime
         viewModel = nil
         pendingConfiguration = nil
     }
+    
+    public func setNumberInput(_ name: String, _ value: Float) {
+        viewModel?.setInput(name, value: value)
+    }
+    
+    public func setBooleanInput(_ name: String, _ value: Bool) {
+        viewModel?.setInput(name, value: value)
+    }
+    
+    public func setTriggerInput(_ name: String) {
+        viewModel?.triggerInput(name)
+    }
 }
