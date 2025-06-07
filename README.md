@@ -21,11 +21,12 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 ## Features
 
 - **Unified API**: Single `CustomRiveAnimation` composable that works across Android and iOS
-- **Multiple Loading Options**: Load animations from URLs or local ByteArray/resources
+- **Multiple Loading Options**: Load animations from URLs, ByteArrays, or pre-composed specifications
 - **Native Performance**: Uses platform-specific Rive implementations for optimal performance
 - **Easy Integration**: Simple Compose-style API with familiar modifier patterns
 - **State Machine Support**: Support for Rive state machines on both platforms
 - **Flexible Configuration**: Customizable alignment, fit, artboard selection, and playback options
+- **Memory Efficient**: Value classes and immutable specifications for optimal performance
 
 ## Platform Support
 
@@ -42,7 +43,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.1")
+    implementation("dev.muazkadan:rive-cmp:0.0.3")
 }
 ```
 
@@ -50,7 +51,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.1")
+    implementation("dev.muazkadan:rive-cmp:0.0.3")
 }
 ```
 
@@ -60,7 +61,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.0.1"
+rive-cmp = "0.0.3"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
@@ -68,7 +69,7 @@ rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
 
 ## Basic Usage
 
-### Loading from URL
+### Direct Animation Loading
 
 ```kotlin
 import dev.muazkadan.rivecmp.CustomRiveAnimation
@@ -84,25 +85,36 @@ fun MyScreen() {
 }
 ```
 
-### Loading from Resources/ByteArray
+### Composition-based Loading (Recommended)
 
 ```kotlin
 import dev.muazkadan.rivecmp.CustomRiveAnimation
+import dev.muazkadan.rivecmp.RiveCompositionSpec
+import dev.muazkadan.rivecmp.rememberRiveComposition
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 
 @OptIn(ExperimentalRiveCmpApi::class)
 @Composable
 fun MyScreen() {
-    var resourceAnimation by remember { mutableStateOf<ByteArray?>(null) }
-    
-    LaunchedEffect(Unit) {
-        resourceAnimation = Res.readBytes("files/your_animation.riv")
+    // URL-based composition
+    val urlAnimation by rememberRiveComposition {
+        RiveCompositionSpec.url("https://cdn.rive.app/animations/your_animation.riv")
     }
     
-    resourceAnimation?.let { byteArray ->
+    // Resource-based composition
+    val resourceAnimation by rememberRiveComposition {
+        RiveCompositionSpec.byteArray(Res.readBytes("files/your_animation.riv"))
+    }
+
+    Column {
         CustomRiveAnimation(
             modifier = Modifier.size(200.dp),
-            byteArray = byteArray
+            composition = urlAnimation
+        )
+        
+        CustomRiveAnimation(
+            modifier = Modifier.size(200.dp),
+            composition = resourceAnimation
         )
     }
 }
@@ -110,7 +122,7 @@ fun MyScreen() {
 
 ## API Reference
 
-### CustomRiveAnimation (URL-based)
+### CustomRiveAnimation (Direct URL)
 
 ```kotlin
 @ExperimentalRiveCmpApi
@@ -126,7 +138,7 @@ fun CustomRiveAnimation(
 )
 ```
 
-### CustomRiveAnimation (ByteArray-based)
+### CustomRiveAnimation (Direct ByteArray)
 
 ```kotlin
 @ExperimentalRiveCmpApi
@@ -142,11 +154,48 @@ fun CustomRiveAnimation(
 )
 ```
 
+### CustomRiveAnimation (Composition-based)
+
+```kotlin
+@ExperimentalRiveCmpApi
+@Composable
+fun CustomRiveAnimation(
+    modifier: Modifier = Modifier,
+    composition: RiveComposition?,
+    alignment: RiveAlignment = RiveAlignment.CENTER,
+    autoPlay: Boolean = true,
+    artboardName: String? = null,
+    fit: RiveFit = RiveFit.CONTAIN,
+    stateMachineName: String? = null,
+)
+```
+
+### RiveCompositionSpec Factory Methods
+
+```kotlin
+// Create URL-based composition spec
+RiveCompositionSpec.url(url: String): RiveCompositionSpec
+
+// Create ByteArray-based composition spec  
+RiveCompositionSpec.byteArray(byteArray: ByteArray): RiveCompositionSpec
+```
+
+### rememberRiveComposition
+
+```kotlin
+@Composable
+fun rememberRiveComposition(
+    vararg keys: Any?,
+    spec: suspend () -> RiveCompositionSpec,
+): State<RiveComposition?>
+```
+
 #### Parameters
 
 - `modifier`: Compose modifier for styling and layout
-- `url`: URL to the Rive animation file
-- `byteArray`: ByteArray containing the Rive animation data
+- `url`: URL to the Rive animation file (direct loading)
+- `byteArray`: ByteArray containing the Rive animation data (direct loading)
+- `composition`: Pre-loaded `RiveComposition` from `rememberRiveComposition` (recommended)
 - `alignment`: How the animation should be aligned within its container (default: `RiveAlignment.CENTER`)
 - `autoPlay`: Whether the animation should start playing automatically (default: `true`)
 - `artboardName`: Optional name of the specific artboard to use
