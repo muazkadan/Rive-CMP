@@ -37,6 +37,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":library"))
 
+            implementation("dev.materii.pullrefresh:pullrefresh:1.4.0-beta03")
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
