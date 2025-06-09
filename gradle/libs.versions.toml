@@ -9,6 +9,7 @@ androidx-lifecycle = "2.9.0"
 rive-android = "10.1.5"
 androidx-startup = "1.2.0"
 spmForKmp = "0.11.2"
+pullrefresh = "1.4.0-beta03"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -17,6 +18,7 @@ androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:life
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 rive-android = { group = "app.rive", name = "rive-android", version.ref = "rive-android" }
 androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
+materii-pullrefresh = { group = "dev.materii.pullrefresh", name = "pullrefresh", version.ref = "pullrefresh" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
