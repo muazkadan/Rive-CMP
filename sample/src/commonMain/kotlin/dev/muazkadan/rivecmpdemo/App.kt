@@ -37,6 +37,19 @@ import androidx.compose.ui.platform.LocalDensity
 import dev.materii.pullrefresh.pullRefresh
 import dev.muazkadan.rivecmp.core.RiveFit
 
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+// import app.rive.runtime.kotlin.core.Fit // No longer needed here, RiveFit is from dev.muazkadan.rivecmp.core
+// import app.rive.runtime.kotlin.core.RiveAnimation // No longer needed here
+
+data class ItemModel(val id: Int, val title: String)
+
 @OptIn(ExperimentalRiveCmpApi::class)
 @Composable
 @Preview
@@ -59,9 +72,15 @@ fun CustomPullRefreshSample(height: Float) {
     val threshold = with(LocalDensity.current) { height.dp.toPx() }
 
     var refreshing by remember { mutableStateOf(false) }
-    var itemCount by remember { mutableStateOf(15) }
+    // var itemCount by remember { mutableStateOf(15) } // Replaced by a list of ItemModels
+    val items = remember { mutableStateListOf<ItemModel>() }
+    LaunchedEffect(Unit) { // Initialize the list
+        if (items.isEmpty()) { // Avoid re-initializing on recompositions if not desired
+            items.addAll(generateItemModels())
+        }
+    }
     var currentDistance by remember { mutableStateOf(0f) }
-    val animation by rememberRiveComposition(
+    val pullToRefreshAnimation by rememberRiveComposition( // Renamed for clarity
         spec = {
             RiveCompositionSpec.byteArray(
                 Res.readBytes("files/pull_to_refresh_use_case.riv")
@@ -80,8 +99,8 @@ fun CustomPullRefreshSample(height: Float) {
         finishedListener = { value ->
             if (value == 0f) {
                 // Only reset the animation when not visible
-                animation?.reset()
-                animation?.pause()
+                pullToRefreshAnimation?.reset()
+                pullToRefreshAnimation?.pause()
             }
         }
     )
@@ -91,9 +110,9 @@ fun CustomPullRefreshSample(height: Float) {
         refreshing = true
         // This simulates loading data with delays. The delays are added to ensure the different
         // states of the animation has time to play
-        animation?.setTriggerInput("numberSimulation", "advance")
+        pullToRefreshAnimation?.setTriggerInput("numberSimulation", "advance")
         delay(1500) // Some future to complete - loading data for example
-        animation?.setTriggerInput("numberSimulation", "advance")
+        pullToRefreshAnimation?.setTriggerInput("numberSimulation", "advance")
         delay(1500)
 
         // Once complete set the target value back to 0, and refreshing false.
@@ -110,7 +129,7 @@ fun CustomPullRefreshSample(height: Float) {
             val dragConsumed = newOffset - currentDistance
 
             currentDistance = newOffset
-            animation?.setNumberInput("numberSimulation", "pull", progress * 100)
+            pullToRefreshAnimation?.setNumberInput("numberSimulation", "pull", progress * 100)
             dragConsumed
         }
     }
@@ -154,7 +173,7 @@ fun CustomPullRefreshSample(height: Float) {
             ) {
                 CustomRiveAnimation(
                     modifier = Modifier.fillMaxWidth().height(200.dp),
-                    composition = animation,
+                    composition = pullToRefreshAnimation,
                     stateMachineName = "numberSimulation",
                     fit = RiveFit.COVER
                 )
@@ -167,8 +186,17 @@ fun CustomPullRefreshSample(height: Float) {
                 .fillMaxHeight()
                 .background(Color(0xFF001C1C))
         ) {
-            items(itemCount) {
-                ListItemUI()
+            // items(itemCount) { // Old way
+            // ListItemUI()
+            // }
+            items(
+                count = items.size,
+                key = { items[it].id }
+            ) { index ->
+                val item = items[index]
+                ListItemUI(model = item, onDelete = {
+                    items.remove(it)
+                })
             }
 
         }
@@ -176,39 +204,123 @@ fun CustomPullRefreshSample(height: Float) {
 
 }
 
+// Removed SwipeToDeleteRiveAnimation composable as it's no longer needed.
+// We will use dev.muazkadan.rivecmp.CustomRiveAnimation directly.
+
+@OptIn(ExperimentalRiveCmpApi::class)
 @Composable
-fun ListItemUI() {
-    Box(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-            .height(100.dp)
-            .background(color = Color(0xFF003C3D), shape = RoundedCornerShape(8.dp))
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.CenterStart)
-                .size(64.dp)
-                .background(color = Color.DarkGray, shape = RoundedCornerShape(4.dp))
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(start = 88.dp, top = 0.dp, end = 16.dp, bottom = 16.dp)
-                .align(alignment = Alignment.Center)
-                .fillMaxWidth()
-                .height(16.dp)
-                .background(color = Color.DarkGray, shape = RoundedCornerShape(4.dp))
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(start = 88.dp, top = 40.dp, end = 16.dp)
-                .align(Alignment.Center)
-                .fillMaxWidth()
-                .height(16.dp)
-                .background(color = Color.DarkGray, shape = RoundedCornerShape(4.dp))
+fun ListItemUI(
+    model: ItemModel,
+    onDelete: (ItemModel) -> Unit,
+    // Parameter for testability: provides the RiveComposition
+    riveCompositionProvider: @Composable () -> dev.muazkadan.rivecmp.RiveComposition? = {
+        rememberRiveComposition(
+            spec = {
+                RiveCompositionSpec.byteArray(
+                    Res.readBytes("files/alligator_swipe.riv")
+                )
+            }
         )
     }
+) {
+    var offsetX by remember { mutableStateOf(0f) }
+    var isDeleting by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    val thresholdPx = with(density) { 150.dp.toPx() } // Adjusted threshold for better UX
+    val itemHeight = 100.dp // Standard item height
+
+    // Use the provided Rive composition
+    val alligatorComposition = riveCompositionProvider()
+
+    val stateMachineName = "AlligatorSwipe" // Assumed state machine name
+    val scrollInputName = "scroll" // Assumed input name for drag
+    val completeTriggerName = "complete" // Assumed trigger name for delete completion
+
+    LaunchedEffect(isDeleting) {
+        if (isDeleting) {
+            alligatorComposition?.fireTrigger(stateMachineName, completeTriggerName)
+            // It's good practice to wait for animation to finish or have a fixed delay
+            delay(500) // Simulate time for "complete" animation to play
+            onDelete(model)
+            // offsetX = 0f // Reset by recomposition when item is removed
+            // isDeleting = false // Reset by recomposition
+        }
+    }
+
+    LaunchedEffect(offsetX, alligatorComposition) {
+        if (!isDeleting) { // Only update scroll if not in deleting animation phase
+            // Normalize offsetX to a percentage, e.g., 0-100
+            // Max swipe distance for 100% could be thresholdPx
+            val scrollPercent = ((-offsetX / thresholdPx) * 100f).coerceIn(0f, 100f)
+            alligatorComposition?.setNumberInput(stateMachineName, scrollInputName, scrollPercent)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(itemHeight) // Give a fixed height to the Box for stable animation background
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        if (offsetX < -thresholdPx && !isDeleting) {
+                            isDeleting = true
+                        } else {
+                            // Animate snap back for smoother UX
+                            // For now, direct set for simplicity, could use animateFloatAsState
+                            offsetX = 0f
+                        }
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        if (!isDeleting) {
+                            offsetX = (offsetX + dragAmount.x).coerceAtMost(0f) // Allow dragging left only
+                        }
+                    }
+                )
+            }
+    ) {
+        // Background Rive Animation (Alligator)
+        // Use dev.muazkadan.rivecmp.CustomRiveAnimation
+        CustomRiveAnimation(
+            composition = alligatorComposition,
+            stateMachineName = stateMachineName, // Use the defined state machine name
+            fit = RiveFit.COVER, // Or other fit modes as needed
+            alignment = Alignment.CenterStart,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxHeight()
+                // The animation width can be linked to offsetX to reveal it
+                .width(with(density) { (-offsetX).coerceAtMost(thresholdPx * 1.2f).toDp() })
+        )
+
+        // Foreground content
+        Row(
+            modifier = Modifier
+                .offset { IntOffset(offsetX.roundToInt(), 0) } // Apply drag offset
+                .padding(16.dp)
+                .fillMaxWidth()
+                .height(itemHeight) // Ensure content takes full defined height
+                .background(color = Color(0xFF003C3D), shape = RoundedCornerShape(8.dp)),
+            verticalAlignment = Alignment.CenterVertically, // Keep content centered
+            horizontalArrangement = Arrangement.SpaceBetween // Keep elements spaced out
+        ) {
+            Column(modifier = Modifier.weight(1f)) { // Allow text to take available space
+                Text(text = model.title, color = Color.White, style = MaterialTheme.typography.titleMedium)
+                Text(text = "ID: ${model.id}", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
+            }
+            // Optionally, keep an icon or ensure padding even if no icon is here
+            Icon(
+                imageVector = Icons.Filled.Delete, // Example, could be part of the Rive animation itself
+                contentDescription = "Delete Action",
+                tint = Color.Transparent, // Make it transparent if Rive handles visual cue
+                modifier = Modifier.size(40.dp) // Ensure space for tap target / visual balance
+            )
+        }
+    }
+}
+
+// Helper function to generate ItemModels
+private fun generateItemModels(count: Int = 20): List<ItemModel> { // Increased default count
+    return List(count) { ItemModel(id = it, title = "Swipeable Item ${it + 1}") }
 }
