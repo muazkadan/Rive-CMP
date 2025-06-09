@@ -1,7 +1,7 @@
 package dev.muazkadan.rivecmpdemo
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -36,17 +36,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import dev.materii.pullrefresh.pullRefresh
 import dev.muazkadan.rivecmp.core.RiveFit
-
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
+import dev.muazkadan.rivecmp.core.RiveAlignment
 import kotlin.math.roundToInt
-// import app.rive.runtime.kotlin.core.Fit // No longer needed here, RiveFit is from dev.muazkadan.rivecmp.core
-// import app.rive.runtime.kotlin.core.RiveAnimation // No longer needed here
 
 data class ItemModel(val id: Int, val title: String)
 
@@ -182,13 +178,12 @@ fun CustomPullRefreshSample(height: Float) {
 
         LazyColumn(
             modifier = Modifier
+                .statusBarsPadding()
                 .offset(y = (scrollValue).dp)
                 .fillMaxHeight()
-                .background(Color(0xFF001C1C))
+                .background(Color(0xFF001C1C)),
+            contentPadding = PaddingValues(vertical = 24.dp)
         ) {
-            // items(itemCount) { // Old way
-            // ListItemUI()
-            // }
             items(
                 count = items.size,
                 key = { items[it].id }
@@ -212,46 +207,76 @@ fun CustomPullRefreshSample(height: Float) {
 fun ListItemUI(
     model: ItemModel,
     onDelete: (ItemModel) -> Unit,
-    // Parameter for testability: provides the RiveComposition
-    riveCompositionProvider: @Composable () -> dev.muazkadan.rivecmp.RiveComposition? = {
-        rememberRiveComposition(
-            spec = {
-                RiveCompositionSpec.byteArray(
-                    Res.readBytes("files/alligator_swipe.riv")
-                )
-            }
-        )
-    }
 ) {
+    val scope = rememberCoroutineScope()
     var offsetX by remember { mutableStateOf(0f) }
+    // Add separate offset for alligator animation
+    var alligatorOffsetX by remember { mutableStateOf(0f) }
     var isDeleting by remember { mutableStateOf(false) }
+    var isTakingItem by remember { mutableStateOf(false) }
     val density = LocalDensity.current
-    val thresholdPx = with(density) { 150.dp.toPx() } // Adjusted threshold for better UX
+    val thresholdPx = with(density) { 120.dp.toPx() } // Threshold for delete action
     val itemHeight = 100.dp // Standard item height
 
     // Use the provided Rive composition
-    val alligatorComposition = riveCompositionProvider()
+    val alligatorComposition by rememberRiveComposition(
+        spec = {
+            RiveCompositionSpec.byteArray(
+                Res.readBytes("files/alligator_swipe.riv")
+            )
+        }
+    )
 
-    val stateMachineName = "AlligatorSwipe" // Assumed state machine name
-    val scrollInputName = "scroll" // Assumed input name for drag
-    val completeTriggerName = "complete" // Assumed trigger name for delete completion
+    val stateMachineName = "State Machine 1" // State machine name from Rive file
+    val scrollInputName = "scroll" // Input name for controlling animation
+    val maxSwipeOffset = -thresholdPx * 1.3f // Maximum swipe distance
 
-    LaunchedEffect(isDeleting) {
-        if (isDeleting) {
-            alligatorComposition?.fireTrigger(stateMachineName, completeTriggerName)
-            // It's good practice to wait for animation to finish or have a fixed delay
-            delay(500) // Simulate time for "complete" animation to play
+    LaunchedEffect(isTakingItem, isDeleting) {
+        if (isTakingItem) {
+            // First phase: Alligator takes the item
+            alligatorComposition?.setNumberInput(stateMachineName, scrollInputName, 100f)
+            delay(400) // Wait for the "bite" part of animation
+
+            // Second phase: Animate in opposite directions
+            // Item slides LEFT (-1000) and alligator slides RIGHT (1000)
+            val initialItemOffset = offsetX
+            val initialAlligatorOffset = alligatorOffsetX
+
+            launch {
+                // Animate the item to the left
+                animate(
+                    initialValue = initialItemOffset,
+                    targetValue = -1000f, // Item slides left (off screen)
+                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+                ) { value, _ ->
+                    offsetX = value
+                }
+            }
+
+            launch {
+                // Animate the alligator to the right
+                animate(
+                    initialValue = initialAlligatorOffset,
+                    targetValue = -1000f, // Alligator slides right (off screen)
+                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
+                ) { value, _ ->
+                    alligatorOffsetX = value
+                }
+            }
+
+            // Wait for animations to finish
+            delay(650)
+
+            // Finally delete the item
+            isDeleting = true
             onDelete(model)
-            // offsetX = 0f // Reset by recomposition when item is removed
-            // isDeleting = false // Reset by recomposition
         }
     }
 
     LaunchedEffect(offsetX, alligatorComposition) {
-        if (!isDeleting) { // Only update scroll if not in deleting animation phase
-            // Normalize offsetX to a percentage, e.g., 0-100
-            // Max swipe distance for 100% could be thresholdPx
-            val scrollPercent = ((-offsetX / thresholdPx) * 100f).coerceIn(0f, 100f)
+        if (!isTakingItem && alligatorComposition != null) {
+            // Map swipe distance to animation progress (0-100)
+            val scrollPercent = ((-offsetX / thresholdPx) * 100f).coerceIn(0f, 100f) * .99f
             alligatorComposition?.setNumberInput(stateMachineName, scrollInputName, scrollPercent)
         }
     }
@@ -259,62 +284,64 @@ fun ListItemUI(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(itemHeight) // Give a fixed height to the Box for stable animation background
+            .height(itemHeight)
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
-                        if (offsetX < -thresholdPx && !isDeleting) {
-                            isDeleting = true
-                        } else {
-                            // Animate snap back for smoother UX
-                            // For now, direct set for simplicity, could use animateFloatAsState
-                            offsetX = 0f
+                        if (offsetX < -thresholdPx && !isTakingItem && !isDeleting) {
+                            // Crossed threshold, trigger take animation
+                            isTakingItem = true
+                        } else if (!isTakingItem && !isDeleting) {
+                            // Return to original position with animation
+                            scope.launch {
+                                animate(offsetX, 0f) { value, _ ->
+                                    offsetX = value
+                                }
+                            }
                         }
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        if (!isDeleting) {
-                            offsetX = (offsetX + dragAmount.x).coerceAtMost(0f) // Allow dragging left only
+                        if (!isTakingItem && !isDeleting) {
+                            // Allow dragging left only and limit how far it can be dragged
+                            // Restrict swiping to a maximum of maxSwipeOffset
+                            offsetX = (offsetX + dragAmount.x).coerceIn(maxSwipeOffset, 0f)
                         }
                     }
                 )
             }
     ) {
-        // Background Rive Animation (Alligator)
-        // Use dev.muazkadan.rivecmp.CustomRiveAnimation
-        CustomRiveAnimation(
-            composition = alligatorComposition,
-            stateMachineName = stateMachineName, // Use the defined state machine name
-            fit = RiveFit.COVER, // Or other fit modes as needed
-            alignment = Alignment.CenterStart,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .fillMaxHeight()
-                // The animation width can be linked to offsetX to reveal it
-                .width(with(density) { (-offsetX).coerceAtMost(thresholdPx * 1.2f).toDp() })
-        )
-
-        // Foreground content
         Row(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) } // Apply drag offset
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-                .height(itemHeight) // Ensure content takes full defined height
+                .height(itemHeight - 44.dp) // Account for padding
                 .background(color = Color(0xFF003C3D), shape = RoundedCornerShape(8.dp)),
-            verticalAlignment = Alignment.CenterVertically, // Keep content centered
-            horizontalArrangement = Arrangement.SpaceBetween // Keep elements spaced out
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) { // Allow text to take available space
-                Text(text = model.title, color = Color.White, style = MaterialTheme.typography.titleMedium)
-                Text(text = "ID: ${model.id}", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
-            }
-            // Optionally, keep an icon or ensure padding even if no icon is here
-            Icon(
-                imageVector = Icons.Filled.Delete, // Example, could be part of the Rive animation itself
-                contentDescription = "Delete Action",
-                tint = Color.Transparent, // Make it transparent if Rive handles visual cue
-                modifier = Modifier.size(40.dp) // Ensure space for tap target / visual balance
+            Text(
+                modifier = Modifier.padding(start = 16.dp),
+                text = model.title,
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxSize()
+                .offset(x = (alligatorOffsetX - offsetX - 500).dp, y = (-120).dp)
+                .scale(2.5f)
+        ) {
+            CustomRiveAnimation(
+                composition = alligatorComposition,
+                stateMachineName = stateMachineName,
+                fit = RiveFit.COVER,
+                alignment = RiveAlignment.CENTER_LEFT,
+                modifier = Modifier.fillMaxSize() // Fill the available space in the Box
             )
         }
     }
