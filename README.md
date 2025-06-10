@@ -4,6 +4,8 @@
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+<img alt="Platform Android" src="https://img.shields.io/badge/Platform-Android-brightgreen"/>
+<img alt="Platform iOS" src="https://img.shields.io/badge/Platform-iOS-lightgray"/>
 
 A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to
 use rive-android and rive-ios seamlessly across Android and iOS platforms.
@@ -15,6 +17,7 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 > applications.
 >
 > **Current Limitations:**
+> - On iOS, `UIKitView` does not support transparent backgrounds, resulting in opaque backgrounds for Rive animations. This is a known limitation in Compose Multiplatform. See [Issue #17](https://github.com/muazkadan/Rive-CMP/issues/17) for details and potential workarounds.
 > - Not all features and properties from the native Rive libraries are supported yet
 > - Some advanced Rive features may not be available across all platforms
 
@@ -43,7 +46,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.3")
+    implementation("dev.muazkadan:rive-cmp:0.0.5")
 }
 ```
 
@@ -51,7 +54,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.3")
+    implementation("dev.muazkadan:rive-cmp:0.0.5")
 }
 ```
 
@@ -61,7 +64,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.0.3"
+rive-cmp = "0.0.5"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
