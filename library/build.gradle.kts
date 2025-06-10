@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "dev.muazkadan"
-version = "0.0.3"
+version = "0.0.5"
 kotlin {
     androidTarget {
         publishLibraryVariants("release")
