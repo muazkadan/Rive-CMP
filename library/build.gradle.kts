@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.spmForKmp)
+    alias(libs.plugins.dokka)
 }
 
 group = "dev.muazkadan"
