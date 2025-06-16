@@ -70,6 +70,48 @@ rive-cmp = "0.0.5"
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
 ```
 
+## Android Initialization
+
+Rive needs to initialize its runtime when your app starts. You can do this in one of the following ways:
+
+<details open>
+<summary>Using the Initialization Provider</summary>
+
+Add this to your app's manifest file:
+
+```xml
+<provider
+  android:name="androidx.startup.InitializationProvider"
+  android:authorities="${applicationId}.androidx-startup"
+  android:exported="false"
+  tools:node="merge">
+    <meta-data android:name="app.rive.runtime.kotlin.RiveInitializer"
+      android:value="androidx.startup" />
+</provider>
+```
+</details>
+
+<details>
+<summary>Using the AppInitializer</summary>
+
+Call the initializer in your application code:
+
+```kotlin
+AppInitializer.getInstance(applicationContext)
+  .initializeComponent(RiveInitializer::class.java)
+```
+</details>
+
+<details>
+<summary>Manual Initialization</summary>
+
+Initialize Rive yourself in your code:
+
+```kotlin
+Rive.init(context)
+```
+</details>
+
 ## Basic Usage
 
 ### Direct Animation Loading
