@@ -10,6 +10,8 @@
 A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to
 use rive-android and rive-ios seamlessly across Android and iOS platforms.
 
+<img src="images/banner.png" alt="Rive CMP Banner"></img>
+
 > **⚠️ EXPERIMENTAL STATUS**
 >
 > This library is currently in an experimental state. Features, APIs, and implementation details may
