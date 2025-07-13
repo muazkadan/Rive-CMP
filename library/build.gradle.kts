@@ -116,7 +116,7 @@ swiftPackageConfig {
         minIos = "14.0"
         spmWorkingPath =
             "${projectDir.resolve("SPM")}" // change the Swift Package Manager working Dir
-        copyDependenciesToApp = true
+        exportedPackageSettings { includeProduct = listOf("RiveRuntime") }
         dependency {
             remotePackageVersion(
                 url = URI("https://github.com/rive-app/rive-ios.git"),
