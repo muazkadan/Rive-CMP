@@ -48,7 +48,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.5")
+    implementation("dev.muazkadan:rive-cmp:0.0.6")
 }
 ```
 
@@ -56,7 +56,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.0.5")
+    implementation("dev.muazkadan:rive-cmp:0.0.6")
 }
 ```
 
@@ -66,7 +66,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.0.5"
+rive-cmp = "0.0.6"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
@@ -122,7 +122,7 @@ If you encounter undefined symbols errors for Swift classes when building for iO
 
 2. Enter the package URL: https://github.com/rive-app/rive-ios.git
 
-3. Select version 6.9.5 (exact match to the library's dependency).
+3. Select version 6.10.0 (exact match to the library's dependency).
 
 4. Add the package to your project.
 
