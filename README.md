@@ -114,6 +114,26 @@ Rive.init(context)
 ```
 </details>
 
+## iOS Setup
+
+If you encounter undefined symbols errors for Swift classes when building for iOS, manually add the rive-ios dependency to your Xcode project:
+
+1. In Xcode, go to File > Add Package Dependencies...
+
+2. Enter the package URL: https://github.com/rive-app/rive-ios.git
+
+3. Select version 6.9.5 (exact match to the library's dependency).
+
+4. Add the package to your project.
+
+5. In the target settings, add RiveRuntime to the Frameworks, Libraries, and Embedded Content.
+
+This resolves linking issues with the Rive runtime on iOS.
+
+Alternatively, for advanced users, the library generates a local Swift package at `library/SPM/spmKmpPlugin/nativeIosShared`. You can add this local package to your Xcode project if you have the source cloned. See [spm4kmp documentation](https://github.com/frankois944/spm4kmp) for details.
+
+Note: The library uses spm4kmp to integrate rive-ios, but manual addition may be required in some setups.
+
 ## Basic Usage
 
 ### Direct Animation Loading
