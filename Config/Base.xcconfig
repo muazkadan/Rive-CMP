@@ -1,0 +1,13 @@
+//
+//  Base.xcconfig
+//  RiveRuntime
+//
+//  Created by David Skuza on 5/20/25.
+//  Copyright © 2025 Rive. All rights reserved.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) WITH_RIVE_AUDIO WITH_RIVE_TEXT
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) WITH_RIVE_AUDIO WITH_RIVE_TEXT
