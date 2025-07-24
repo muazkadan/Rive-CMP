@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalSpmForKmpFeature::class)
 
-import com.vanniktech.maven.publish.SonatypeHost
 import io.github.frankois944.spmForKmp.utils.ExperimentalSpmForKmpFeature
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -61,6 +60,10 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
+
+        iosMain.dependencies {
+            implementation(libs.snizzors)
+        }
     }
 }
 
@@ -77,7 +80,7 @@ android {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
     signAllPublications()
 
