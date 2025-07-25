@@ -60,6 +60,10 @@ kotlin {
                 implementation(libs.kotlin.test)
             }
         }
+
+        iosMain.dependencies {
+            implementation(libs.snizzors)
+        }
     }
 }
 

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.UIKitView
+import com.infiniteretry.snizzors.SnizzorsUIView
 import dev.muazkadan.rivecmp.core.RiveAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.core.toIosAlignment
@@ -53,7 +53,7 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
-                UIKitView(
+                SnizzorsUIView(
                     factory = {
                         animationController.createAnimationView()
                     },
@@ -93,7 +93,7 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
-                UIKitView(
+                SnizzorsUIView(
                     factory = {
                         animationController.createAnimationView()
                     },
@@ -138,7 +138,7 @@ actual fun CustomRiveAnimation(
         }
     }
 
-    UIKitView(
+    SnizzorsUIView(
         factory = {
             animationController.createAnimationView()
         },
@@ -190,7 +190,7 @@ actual fun CustomRiveAnimation(
         }
     }
 
-    UIKitView(
+    SnizzorsUIView(
         factory = {
             animationController.createAnimationView()
         },
