@@ -122,7 +122,7 @@ If you encounter undefined symbols errors for Swift classes when building for iO
 
 2. Enter the package URL: https://github.com/rive-app/rive-ios.git
 
-3. Select version 6.10.0 (exact match to the library's dependency).
+3. Select version 6.11.0 (exact match to the library's dependency).
 
 4. Add the package to your project.
 
