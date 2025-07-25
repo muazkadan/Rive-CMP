@@ -11,7 +11,7 @@ let package = Package(
       targets: ["exportedNativeIosShared"])
   ],
   dependencies: [
-    .package(url: "https://github.com/rive-app/rive-ios.git", exact: "6.10.0")
+    .package(url: "https://github.com/rive-app/rive-ios.git", exact: "6.11.0")
   ],
   targets: [
     .target(
