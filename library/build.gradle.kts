@@ -123,7 +123,7 @@ swiftPackageConfig {
         dependency {
             remotePackageVersion(
                 url = URI("https://github.com/rive-app/rive-ios.git"),
-                version = "6.11.0",
+                version = "6.11.1",
                 products = {
                     add("RiveRuntime")
                 },
