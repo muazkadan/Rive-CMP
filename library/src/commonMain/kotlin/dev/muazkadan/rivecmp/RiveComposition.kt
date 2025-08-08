@@ -3,9 +3,8 @@ package dev.muazkadan.rivecmp;
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import dev.muazkadan.rivecmp.utils.defaultAsyncDispatcher
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -20,7 +19,7 @@ fun rememberRiveComposition(
 
     LaunchedEffect(result) {
         try {
-            val composition = withContext(Dispatchers.IO) {
+            val composition = withContext(defaultAsyncDispatcher) {
                 val specInstance = spec()
                 specInstance.load()
             }
