@@ -34,6 +34,8 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 - **Flexible Configuration**: Customizable alignment, fit, artboard selection, and playback options
 - **Memory Efficient**: Value classes and immutable specifications for optimal performance
 
+See [FEATURE_SUPPORT.md](FEATURE_SUPPORT.md) for detailed feature compatibility with the native Rive runtimes.
+
 ## Platform Support
 
 | Platform | Implementation        | Dependency                |
