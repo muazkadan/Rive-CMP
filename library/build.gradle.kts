@@ -72,6 +72,7 @@ kotlin {
 
         jsMain.dependencies {
             implementation(npm("@rive-app/canvas", "2.31.1"))
+            implementation(libs.kotlin.wrapper.browser)
         }
     }
 }
