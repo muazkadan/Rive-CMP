@@ -79,6 +79,10 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.snizzors)
         }
+
+        jsMain.dependencies {
+            implementation(npm("@rive-app/canvas", "2.31.1"))
+        }
     }
 }
 
