@@ -41,6 +41,11 @@ kotlin {
         }
     }
 
+    js {
+        browser()
+        binaries.library()
+    }
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
