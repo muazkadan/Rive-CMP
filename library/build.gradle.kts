@@ -42,7 +42,7 @@ kotlin {
             dependency {
                 remotePackageVersion(
                     url = uri("https://github.com/rive-app/rive-ios.git"),
-                    version = "6.11.1",
+                    version = "6.12.3",
                     products = {
                         add("RiveRuntime", exportToKotlin = true)
                     },
