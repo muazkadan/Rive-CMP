@@ -1,9 +1,9 @@
 @file:OptIn(ExperimentalSpmForKmpFeature::class)
 
+import io.github.frankois944.spmForKmp.swiftPackageConfig
 import io.github.frankois944.spmForKmp.utils.ExperimentalSpmForKmpFeature
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.net.URI
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -34,9 +34,19 @@ kotlin {
             baseName = "RiveCMP"
             isStatic = true
         }
-        it.compilations {
-            val main by getting {
-                cinterops.create("nativeIosShared")
+        it.swiftPackageConfig(cinteropName = "nativeIosShared") {
+            minIos = "14.0"
+            spmWorkingPath =
+                "${projectDir.resolve("SPM")}" // change the Swift Package Manager working Dir
+            exportedPackageSettings { includeProduct = listOf("RiveRuntime") }
+            dependency {
+                remotePackageVersion(
+                    url = uri("https://github.com/rive-app/rive-ios.git"),
+                    version = "6.11.1",
+                    products = {
+                        add("RiveRuntime", exportToKotlin = true)
+                    },
+                )
             }
         }
     }
@@ -110,24 +120,6 @@ mavenPublishing {
             url = "https://github.com/muazkadan/Rive-CMP"
             connection = "scm:git:git://github.com/muazkadan/Rive-CMP.git"
             developerConnection = "scm:git:ssh://github.com/muazkadan/Rive-CMP.git"
-        }
-    }
-}
-
-swiftPackageConfig {
-    create("nativeIosShared") {
-        minIos = "14.0"
-        spmWorkingPath =
-            "${projectDir.resolve("SPM")}" // change the Swift Package Manager working Dir
-        exportedPackageSettings { includeProduct = listOf("RiveRuntime") }
-        dependency {
-            remotePackageVersion(
-                url = URI("https://github.com/rive-app/rive-ios.git"),
-                version = "6.11.1",
-                products = {
-                    add("RiveRuntime")
-                },
-            )
         }
     }
 }
