@@ -51,6 +51,11 @@ kotlin {
         }
     }
 
+    js {
+        browser()
+        binaries.library()
+    }
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -73,6 +78,10 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.snizzors)
+        }
+
+        jsMain.dependencies {
+            implementation(npm("@rive-app/canvas", "2.31.1"))
         }
     }
 }

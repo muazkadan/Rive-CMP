@@ -49,6 +49,8 @@ actual fun CustomRiveAnimation(
 
                 DisposableEffect(Unit) {
                     onDispose {
+                        // Disconnect composition first to prevent calls on released controller
+                        composition.connectToAnimationView(null)
                         animationController.releaseAnimation()
                     }
                 }
@@ -89,6 +91,8 @@ actual fun CustomRiveAnimation(
 
                 DisposableEffect(Unit) {
                     onDispose {
+                        // Disconnect composition first to prevent calls on released controller
+                        composition.connectToAnimationView(null)
                         animationController.releaseAnimation()
                     }
                 }
