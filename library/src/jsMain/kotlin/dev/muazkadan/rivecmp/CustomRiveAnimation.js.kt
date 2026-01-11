@@ -37,24 +37,24 @@ external object RiveSDK {
         fun resizeDrawingSurfaceToCanvas()
     }
     object Fit {
-        val COVER: dynamic
-        val CONTAIN: dynamic
-        val FILL: dynamic
-        val FIT_WIDTH: dynamic
-        val FIT_HEIGHT: dynamic
-        val NONE: dynamic
-        val SCALE_DOWN: dynamic
+        val Cover: dynamic
+        val Contain: dynamic
+        val Fill: dynamic
+        val FitWidth: dynamic
+        val FitHeight: dynamic
+        val None: dynamic
+        val ScaleDown: dynamic
     }
     object Alignment {
-        val CENTER: dynamic
-        val TOP_LEFT: dynamic
-        val TOP_CENTER: dynamic
-        val TOP_RIGHT: dynamic
-        val CENTER_LEFT: dynamic
-        val CENTER_RIGHT: dynamic
-        val BOTTOM_LEFT: dynamic
-        val BOTTOM_CENTER: dynamic
-        val BOTTOM_RIGHT: dynamic
+        val Center: dynamic
+        val TopLeft: dynamic
+        val TopCenter: dynamic
+        val TopRight: dynamic
+        val CenterLeft: dynamic
+        val CenterRight: dynamic
+        val BottomLeft: dynamic
+        val BottomCenter: dynamic
+        val BottomRight: dynamic
     }
     class Layout(fit: dynamic, alignment: dynamic)
 }
@@ -86,26 +86,26 @@ actual fun CustomRiveAnimation(
     )
 
     val riveFit = when (fit) {
-        RiveFit.FILL -> RiveSDK.Fit.FILL
-        RiveFit.CONTAIN -> RiveSDK.Fit.CONTAIN
-        RiveFit.COVER -> RiveSDK.Fit.COVER
-        RiveFit.FIT_WIDTH -> RiveSDK.Fit.FIT_WIDTH
-        RiveFit.FIT_HEIGHT -> RiveSDK.Fit.FIT_HEIGHT
-        RiveFit.NONE -> RiveSDK.Fit.NONE
+        RiveFit.FILL -> RiveSDK.Fit.Fill
+        RiveFit.CONTAIN -> RiveSDK.Fit.Contain
+        RiveFit.COVER -> RiveSDK.Fit.Cover
+        RiveFit.FIT_WIDTH -> RiveSDK.Fit.FitWidth
+        RiveFit.FIT_HEIGHT -> RiveSDK.Fit.FitHeight
+        RiveFit.NONE -> RiveSDK.Fit.None
         // Fallback or map SCALE_DOWN
-        else -> RiveSDK.Fit.CONTAIN
+        else -> RiveSDK.Fit.Contain
     }
 
     val riveAlignment = when (alignment) {
-        RiveAlignment.TOP_LEFT -> RiveSDK.Alignment.TOP_LEFT
-        RiveAlignment.TOP_CENTER -> RiveSDK.Alignment.TOP_CENTER
-        RiveAlignment.TOP_RIGHT -> RiveSDK.Alignment.TOP_RIGHT
-        RiveAlignment.CENTER_LEFT -> RiveSDK.Alignment.CENTER_LEFT
-        RiveAlignment.CENTER -> RiveSDK.Alignment.CENTER
-        RiveAlignment.CENTER_RIGHT -> RiveSDK.Alignment.CENTER_RIGHT
-        RiveAlignment.BOTTOM_LEFT -> RiveSDK.Alignment.BOTTOM_LEFT
-        RiveAlignment.BOTTOM_CENTER -> RiveSDK.Alignment.BOTTOM_CENTER
-        RiveAlignment.BOTTOM_RIGHT -> RiveSDK.Alignment.BOTTOM_RIGHT
+        RiveAlignment.TOP_LEFT -> RiveSDK.Alignment.TopLeft
+        RiveAlignment.TOP_CENTER -> RiveSDK.Alignment.TopCenter
+        RiveAlignment.TOP_RIGHT -> RiveSDK.Alignment.TopRight
+        RiveAlignment.CENTER_LEFT -> RiveSDK.Alignment.CenterLeft
+        RiveAlignment.CENTER -> RiveSDK.Alignment.Center
+        RiveAlignment.CENTER_RIGHT -> RiveSDK.Alignment.CenterRight
+        RiveAlignment.BOTTOM_LEFT -> RiveSDK.Alignment.BottomLeft
+        RiveAlignment.BOTTOM_CENTER -> RiveSDK.Alignment.BottomCenter
+        RiveAlignment.BOTTOM_RIGHT -> RiveSDK.Alignment.BottomRight
     }
 
     DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName) {
