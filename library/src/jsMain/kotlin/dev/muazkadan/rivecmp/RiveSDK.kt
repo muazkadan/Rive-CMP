@@ -11,7 +11,9 @@ external object RiveSDK {
         fun cleanup()
         fun resizeToCanvas()
         fun resizeDrawingSurfaceToCanvas()
+        fun reset(params: dynamic)
     }
+
     object Fit {
         val Cover: dynamic
         val Contain: dynamic
@@ -21,6 +23,7 @@ external object RiveSDK {
         val None: dynamic
         val ScaleDown: dynamic
     }
+
     object Alignment {
         val Center: dynamic
         val TopLeft: dynamic
@@ -32,5 +35,6 @@ external object RiveSDK {
         val BottomCenter: dynamic
         val BottomRight: dynamic
     }
+
     class Layout(options: dynamic = definedExternally)
 }
