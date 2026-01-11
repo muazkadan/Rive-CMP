@@ -107,7 +107,7 @@ actual fun CustomRiveAnimation(
         RiveAlignment.BOTTOM_RIGHT -> RiveSDK.Alignment.BOTTOM_RIGHT
     }
 
-    DisposableEffect(composition.spec, canvas) {
+    DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName) {
         val layout = RiveSDK.Layout(riveFit, riveAlignment)
         
         val options = js("{}")
