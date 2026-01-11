@@ -12,7 +12,6 @@ spmForKmp = "1.4.2"
 pullrefresh = "1.4.0-beta03"
 dokka = "2.1.0"
 snizzors = "1.0.0-cmp1.9"
-browser = "2025.8.9"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -23,7 +22,6 @@ rive-android = { group = "app.rive", name = "rive-android", version.ref = "rive-
 androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
 materii-pullrefresh = { group = "dev.materii.pullrefresh", name = "pullrefresh", version.ref = "pullrefresh" }
 snizzors = { group = "com.infiniteretry.snizzors", name = "snizzors", version.ref = "snizzors" }
-kotlin-wrapper-browser= { group = "org.jetbrains.kotlin-wrappers", name = "kotlin-browser", version.ref = "browser" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
