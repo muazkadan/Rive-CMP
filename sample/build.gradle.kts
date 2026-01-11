@@ -27,15 +27,6 @@ kotlin {
             isStatic = true
         }
     }
-
-    js(IR) {
-        browser {
-            commonWebpackConfig {
-                outputFileName = "composeApp.js"
-            }
-        }
-        binaries.executable()
-    }
     
     sourceSets {
         
@@ -46,6 +37,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":library"))
 
+            implementation(libs.materii.pullrefresh)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
