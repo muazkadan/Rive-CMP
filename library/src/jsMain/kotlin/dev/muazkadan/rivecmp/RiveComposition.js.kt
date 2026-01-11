@@ -1,32 +1,42 @@
 package dev.muazkadan.rivecmp
 
-import dev.muazkadan.rivecmp.external.RiveClass
+import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 
-actual class RiveComposition internal actual constructor(spec: RiveCompositionSpec) {
+@ExperimentalRiveCmpApi
+actual class RiveComposition internal actual constructor(
+    spec: RiveCompositionSpec
+) {
     internal actual val spec: RiveCompositionSpec = spec
+    private var riveInstance: dynamic = null
 
-    // Reference to the underlying Rive runtime instance created by the Composable
-    private var riveInstance: RiveClass? = null
-
-    actual fun setNumberInput(
-        stateMachineName: String,
-        name: String,
-        value: Float
-    ) {
-        // Not supported by current JS interop (@rive-app/canvas wrapper exposed here)
-        // Left as no-op for web target.
+    actual fun setNumberInput(stateMachineName: String, name: String, value: Float) {
+        val inputs = riveInstance?.stateMachineInputs(stateMachineName)
+        if (inputs != null) {
+            val input = (inputs as Array<dynamic>).find { it.name == name }
+            if (input != null) {
+                input.value = value
+            }
+        }
     }
 
-    actual fun setBooleanInput(
-        stateMachineName: String,
-        name: String,
-        value: Boolean
-    ) {
-        // Not supported by current JS interop; no-op.
+    actual fun setBooleanInput(stateMachineName: String, name: String, value: Boolean) {
+        val inputs = riveInstance?.stateMachineInputs(stateMachineName)
+        if (inputs != null) {
+            val input = (inputs as Array<dynamic>).find { it.name == name }
+            if (input != null) {
+                input.value = value
+            }
+        }
     }
 
     actual fun setTriggerInput(stateMachineName: String, name: String) {
-        // Not supported by current JS interop; no-op.
+        val inputs = riveInstance?.stateMachineInputs(stateMachineName)
+        if (inputs != null) {
+            val input = (inputs as Array<dynamic>).find { it.name == name }
+            if (input != null) {
+                input.fire()
+            }
+        }
     }
 
     actual fun pause() {
@@ -34,17 +44,14 @@ actual class RiveComposition internal actual constructor(spec: RiveCompositionSp
     }
 
     actual fun reset() {
-        // Minimal behavior: pause the animation. Advanced reset would require
-        // reloading the composition which is not covered by current interop.
-        riveInstance?.pause()
+        riveInstance?.reset()
     }
 
     actual fun stop() {
-        // Cleanup underlying instance if available
-        riveInstance?.cleanup()
+        riveInstance?.stop()
     }
 
     internal actual fun connectToAnimationView(animationView: Any?) {
-        riveInstance = animationView as? RiveClass
+        riveInstance = animationView
     }
 }
