@@ -56,7 +56,7 @@ external object RiveSDK {
         val BottomCenter: dynamic
         val BottomRight: dynamic
     }
-    class Layout(fit: dynamic, alignment: dynamic)
+    class Layout(options: dynamic = definedExternally)
 }
 
 @OptIn(ExperimentalRiveCmpApi::class, ExperimentalComposeUiApi::class)
@@ -109,7 +109,10 @@ actual fun CustomRiveAnimation(
     }
 
     DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName) {
-        val layout = RiveSDK.Layout(riveFit, riveAlignment)
+        val layoutOptions = js("{}")
+        layoutOptions.fit = riveFit
+        layoutOptions.alignment = riveAlignment
+        val layout = RiveSDK.Layout(layoutOptions)
         
         val options = js("{}")
         options.canvas = canvas
