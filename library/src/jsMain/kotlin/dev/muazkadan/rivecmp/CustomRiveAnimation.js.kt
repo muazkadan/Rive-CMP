@@ -106,6 +106,8 @@ actual fun CustomRiveAnimation(
         composition.connectToAnimationView(r)
 
         onDispose {
+            // Disconnect composition first to prevent calls on cleaned-up instance
+            composition.connectToAnimationView(null)
             r.stop()
             r.cleanup()
         }
