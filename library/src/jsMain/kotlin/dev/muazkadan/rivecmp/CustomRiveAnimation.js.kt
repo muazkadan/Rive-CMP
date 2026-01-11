@@ -34,6 +34,7 @@ external object RiveSDK {
         fun stateMachineInputs(name: String): Array<dynamic>
         fun cleanup()
         fun resizeToCanvas()
+        fun resizeDrawingSurfaceToCanvas()
     }
     object Fit {
         val COVER: dynamic
@@ -133,8 +134,15 @@ actual fun CustomRiveAnimation(
             }
         }
 
-        val r = RiveSDK.Rive(options)
-        
+        var r: RiveSDK.Rive? = null
+
+        // Add onLoad callback to ensure the drawing surface matches the canvas size
+        options.onLoad = {
+            r?.resizeDrawingSurfaceToCanvas()
+        }
+
+        r = RiveSDK.Rive(options)
+
         // Connect composition to this instance
         composition.connectToAnimationView(r)
 
