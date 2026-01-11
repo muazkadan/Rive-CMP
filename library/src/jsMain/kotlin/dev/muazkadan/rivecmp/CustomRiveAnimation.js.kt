@@ -15,50 +15,6 @@ import org.khronos.webgl.Uint8Array
 import org.w3c.dom.HTMLCanvasElement
 import kotlin.js.unsafeCast
 
-// Import declaration for the external Rive library
-// Since we are using npm, we access it via dynamic for simplicity or define external class
-// We assume 'rive' is available globally or required.
-// For KMP with NPM, we usually access via js("require('@rive-app/canvas')") or similar if using CommonJS/UMD
-// but in ES modules (Kotlin 2.0+ default), it might be different.
-// The safest way in a library without forcing a specific loader is to use the implementation dependency
-// and access the module via @JsModule if possible, or dynamic import.
-// Using a dynamic require approach for now to avoid complex externals setup.
-
-@JsModule("@rive-app/canvas")
-@JsNonModule
-external object RiveSDK {
-    class Rive(options: dynamic) {
-        fun play()
-        fun pause()
-        fun stop()
-        fun stateMachineInputs(name: String): Array<dynamic>
-        fun cleanup()
-        fun resizeToCanvas()
-        fun resizeDrawingSurfaceToCanvas()
-    }
-    object Fit {
-        val Cover: dynamic
-        val Contain: dynamic
-        val Fill: dynamic
-        val FitWidth: dynamic
-        val FitHeight: dynamic
-        val None: dynamic
-        val ScaleDown: dynamic
-    }
-    object Alignment {
-        val Center: dynamic
-        val TopLeft: dynamic
-        val TopCenter: dynamic
-        val TopRight: dynamic
-        val CenterLeft: dynamic
-        val CenterRight: dynamic
-        val BottomLeft: dynamic
-        val BottomCenter: dynamic
-        val BottomRight: dynamic
-    }
-    class Layout(options: dynamic = definedExternally)
-}
-
 @OptIn(ExperimentalRiveCmpApi::class, ExperimentalComposeUiApi::class)
 @Composable
 actual fun CustomRiveAnimation(
