@@ -45,10 +45,9 @@ actual class RiveComposition internal actual constructor(
 
     actual fun reset() {
         // Rive Web SDK reset() takes an options object (RiveResetParameters)
-        // Pass empty object to reset everything to initial state
-        val options = js("{}")
-        options.autoplay = true
-        riveInstance?.reset(options)
+        // Pass empty object to reset everything to initial state without forcing autoplay
+        // This matches the behavior of Android and iOS implementations which preserve the original autoplay state
+        riveInstance?.reset(js("{}"))
     }
 
     actual fun stop() {
