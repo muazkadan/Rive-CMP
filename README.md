@@ -6,9 +6,10 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <img alt="Platform Android" src="https://img.shields.io/badge/Platform-Android-brightgreen"/>
 <img alt="Platform iOS" src="https://img.shields.io/badge/Platform-iOS-lightgray"/>
+<img alt="Platform Web" src="https://img.shields.io/badge/Platform-Web%20(JS)-orange"/>
 
 A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to
-use rive-android and rive-ios seamlessly across Android and iOS platforms.
+use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS, and Web platforms.
 
 <img src="images/banner.png" alt="Rive CMP Banner"></img>
 
@@ -25,7 +26,7 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 
 ## Features
 
-- **Unified API**: Single `CustomRiveAnimation` composable that works across Android and iOS
+- **Unified API**: Single `CustomRiveAnimation` composable that works across Android, iOS and Web
 - **Multiple Loading Options**: Load animations from URLs, ByteArrays, or pre-composed
   specifications
 - **Native Performance**: Uses platform-specific Rive implementations for optimal performance
@@ -40,6 +41,7 @@ use rive-android and rive-ios seamlessly across Android and iOS platforms.
 |----------|-----------------------|---------------------------|
 | Android  | Native rive-android   | `app.rive.runtime.kotlin` |
 | iOS      | Swift Package Manager | `rive-ios` via spm4kmp    |
+| Web (JS) | NPM package           | `@rive-app/canvas`        |
 
 ## Installation
 
@@ -49,7 +51,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.2.2")
+    implementation("dev.muazkadan:rive-cmp:0.3.0")
 }
 ```
 
@@ -57,7 +59,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.2.2")
+    implementation("dev.muazkadan:rive-cmp:0.3.0")
 }
 ```
 
@@ -67,7 +69,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.2.2"
+rive-cmp = "0.3.0"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
@@ -294,6 +296,12 @@ fun rememberRiveComposition(
 - Xcode: 15+
 - Swift: 5.9+
 
+### Web (JS)
+
+- Compose Multiplatform: 1.9.0+
+- Kotlin/JS with IR compiler
+- Browser environment
+
 ## Building
 
 This library uses Kotlin Multiplatform with the following plugins:
@@ -361,6 +369,7 @@ limitations under the License.
 - [Rive](https://rive.app/) for the amazing animation platform
 - [rive-android](https://github.com/rive-app/rive-android) for Android implementation
 - [rive-ios](https://github.com/rive-app/rive-ios) for iOS implementation
+- [@rive-app/canvas](https://www.npmjs.com/package/@rive-app/canvas) for Web implementation
 - [spm4kmp](https://github.com/frankois944/spm4kmp) for Swift Package Manager integration
 - [Snizzors](https://github.com/Infinite-Retry/Snizzors) for enabling transparent UIViews in
   Compose Multiplatform
