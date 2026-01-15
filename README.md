@@ -51,7 +51,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.3.0")
+    implementation("dev.muazkadan:rive-cmp:0.3.1")
 }
 ```
 
@@ -59,7 +59,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.3.0")
+    implementation("dev.muazkadan:rive-cmp:0.3.1")
 }
 ```
 
@@ -69,7 +69,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.3.0"
+rive-cmp = "0.3.1"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
@@ -129,7 +129,7 @@ rive-ios dependency to your Xcode project:
 
 2. Enter the package URL: https://github.com/rive-app/rive-ios.git
 
-3. Select version 6.12.3 (exact match to the library's dependency).
+3. Select version 6.13.0 (exact match to the library's dependency).
 
 4. Add the package to your project.
 
