@@ -77,7 +77,7 @@ kotlin {
         }
 
         iosMain.dependencies {
-            implementation(libs.snizzors)
+//            implementation(libs.snizzors)
         }
 
         jsMain.dependencies {
