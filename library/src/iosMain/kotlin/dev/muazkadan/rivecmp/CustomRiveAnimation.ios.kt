@@ -3,8 +3,10 @@ package dev.muazkadan.rivecmp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import com.infiniteretry.snizzors.SnizzorsUIView
+import androidx.compose.ui.viewinterop.UIKitInteropProperties
+import androidx.compose.ui.viewinterop.UIKitView
 import dev.muazkadan.rivecmp.core.RiveAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.core.toIosAlignment
@@ -18,7 +20,7 @@ import nativeIosShared.RiveAnimationController
 import platform.Foundation.NSData
 import platform.Foundation.create
 
-@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class, ExperimentalComposeUiApi::class)
 @ExperimentalRiveCmpApi
 @Composable
 actual fun CustomRiveAnimation(
@@ -55,14 +57,15 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
-                SnizzorsUIView(
+                UIKitView(
                     factory = {
                         animationController.createAnimationView()
                     },
                     modifier = modifier,
                     update = { view ->
                         animationController.updateView(view)
-                    }
+                    },
+                    properties = UIKitInteropProperties(placedAsOverlay = true)
                 )
             }
             is RiveByteArrayCompositionSpec -> {
@@ -97,21 +100,22 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
-                SnizzorsUIView(
+                UIKitView(
                     factory = {
                         animationController.createAnimationView()
                     },
                     modifier = modifier,
                     update = { view ->
                         animationController.updateView(view)
-                    }
+                    },
+                    properties = UIKitInteropProperties(placedAsOverlay = true)
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, ExperimentalComposeUiApi::class)
 @ExperimentalRiveCmpApi
 @Composable
 actual fun CustomRiveAnimation(
@@ -142,19 +146,20 @@ actual fun CustomRiveAnimation(
         }
     }
 
-    SnizzorsUIView(
+    UIKitView(
         factory = {
             animationController.createAnimationView()
         },
         modifier = modifier,
         update = { view ->
             animationController.updateView(view)
-        }
+        },
+        properties = UIKitInteropProperties(placedAsOverlay = true)
     )
 }
 
 
-@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class, ExperimentalComposeUiApi::class)
 @ExperimentalRiveCmpApi
 @Composable
 actual fun CustomRiveAnimation(
@@ -194,13 +199,14 @@ actual fun CustomRiveAnimation(
         }
     }
 
-    SnizzorsUIView(
+    UIKitView(
         factory = {
             animationController.createAnimationView()
         },
         modifier = modifier,
         update = { view ->
             animationController.updateView(view)
-        }
+        },
+        properties = UIKitInteropProperties(placedAsOverlay = true)
     )
 }
