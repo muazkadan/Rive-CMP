@@ -16,6 +16,7 @@ expect fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
 )
 
 @ExperimentalRiveCmpApi
@@ -28,6 +29,7 @@ expect fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
 )
 
 @ExperimentalRiveCmpApi
@@ -40,4 +42,5 @@ expect fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
 )

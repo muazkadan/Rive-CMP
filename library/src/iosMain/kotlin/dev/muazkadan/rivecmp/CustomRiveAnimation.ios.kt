@@ -30,7 +30,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
     if (composition != null) {
         when (val spec = composition.spec) {
@@ -108,7 +109,7 @@ actual fun CustomRiveAnimation(
                     update = { view ->
                         animationController.updateView(view)
                     },
-                    properties = UIKitInteropProperties(placedAsOverlay = true)
+                    properties = UIKitInteropProperties(placedAsOverlay = overlay)
                 )
             }
         }
@@ -125,7 +126,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
     val animationController = remember(url, autoPlay, artboardName, fit, stateMachineName, alignment) {
         val controller = RiveAnimationController()
@@ -154,7 +156,7 @@ actual fun CustomRiveAnimation(
         update = { view ->
             animationController.updateView(view)
         },
-        properties = UIKitInteropProperties(placedAsOverlay = true)
+        properties = UIKitInteropProperties(placedAsOverlay = overlay)
     )
 }
 
@@ -169,7 +171,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
     val animationController = remember(byteArray, autoPlay, artboardName, fit, stateMachineName, alignment) {
         val controller = RiveAnimationController()
@@ -207,6 +210,6 @@ actual fun CustomRiveAnimation(
         update = { view ->
             animationController.updateView(view)
         },
-        properties = UIKitInteropProperties(placedAsOverlay = true)
+        properties = UIKitInteropProperties(placedAsOverlay = overlay)
     )
 }
