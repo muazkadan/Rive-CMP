@@ -19,7 +19,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
     if (composition != null) {
         when (val spec = composition.spec) {
@@ -90,7 +91,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
     AndroidView(
         modifier = modifier,
@@ -125,7 +127,8 @@ actual fun CustomRiveAnimation(
     autoPlay: Boolean,
     artboardName: String?,
     fit: RiveFit,
-    stateMachineName: String?
+    stateMachineName: String?,
+    overlay: Boolean
 ) {
 
     AndroidView(
