@@ -66,7 +66,7 @@ actual fun CustomRiveAnimation(
                     update = { view ->
                         animationController.updateView(view)
                     },
-                    properties = UIKitInteropProperties(placedAsOverlay = true)
+                    properties = UIKitInteropProperties(placedAsOverlay = overlay)
                 )
             }
             is RiveByteArrayCompositionSpec -> {
