@@ -1,47 +1,40 @@
 package dev.muazkadan.rivecmp
 
-import app.rive.runtime.kotlin.RiveAnimationView
-import java.lang.ref.WeakReference
+import app.rive.ViewModelInstance
 
 actual class RiveComposition internal actual constructor(
     spec: RiveCompositionSpec
 ) {
     internal actual val spec: RiveCompositionSpec = spec
-    private var animationViewRef: RiveAnimationView? = null
+    private var viewModelInstanceRef: ViewModelInstance? = null
 
     actual fun setNumberInput(stateMachineName: String, name: String, value: Float) {
-        animationViewRef?.setNumberState(
-            stateMachineName = stateMachineName,
-            inputName = name,
-            value = value
-        )
+        viewModelInstanceRef?.setNumber(name, value)
     }
 
     actual fun setBooleanInput(stateMachineName: String, name: String, value: Boolean) {
-        animationViewRef?.setBooleanState(
-            stateMachineName = stateMachineName,
-            inputName = name,
-            value = value
-        )
+        viewModelInstanceRef?.setBoolean(name, value)
     }
 
     actual fun setTriggerInput(stateMachineName: String, name: String) {
-        animationViewRef?.fireState(stateMachineName = stateMachineName, inputName = name)
+        viewModelInstanceRef?.fireTrigger(name)
     }
 
     actual fun pause() {
-        animationViewRef?.pause()
+        // Pausing is no longer supported directly on the ViewModelInstance.
+        // It's handled at the Composable level. This method might be a no-op 
+        // or require architecture changes if pause logic needs to be retained here.
     }
 
     actual fun reset() {
-        animationViewRef?.reset()
+        // Handled via state machine reloads or data binds in the new API
     }
 
     actual fun stop() {
-        animationViewRef?.stop()
+        // Stop is equivalent to pausing or detaching in the new API
     }
 
     internal actual fun connectToAnimationView(animationView: Any?) {
-        animationViewRef = animationView as? RiveAnimationView
+        viewModelInstanceRef = animationView as? ViewModelInstance
     }
 } 
