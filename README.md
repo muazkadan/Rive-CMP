@@ -51,7 +51,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.3.2")
+    implementation("dev.muazkadan:rive-cmp:0.3.3")
 }
 ```
 
@@ -59,7 +59,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.3.2")
+    implementation("dev.muazkadan:rive-cmp:0.3.3")
 }
 ```
 
@@ -69,7 +69,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.3.2"
+rive-cmp = "0.3.3"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
