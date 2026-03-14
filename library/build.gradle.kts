@@ -15,7 +15,7 @@ plugins {
 }
 
 group = "dev.muazkadan"
-version = "0.3.2"
+version = "0.3.3"
 kotlin {
     androidLibrary {
         namespace = "dev.muazkadan.rivecmp"
