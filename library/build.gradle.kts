@@ -24,9 +24,6 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
-        androidResources {
-            enable = true
-        }
     }
     listOf(
         iosX64(),
