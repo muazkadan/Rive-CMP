@@ -1,7 +1,7 @@
 # Rive CMP
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/dev.muazkadan/rive-cmp)
-[![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
+[![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <img alt="Platform Android" src="https://img.shields.io/badge/Platform-Android-brightgreen"/>
@@ -285,10 +285,11 @@ fun rememberRiveComposition(
 
 ### Android
 
-- Minimum SDK: 21
-- Target SDK: 34
-- Kotlin: 1.9+
-- Compose: 1.5+
+- Minimum SDK: 24
+- Compile/Target SDK: 36
+- Kotlin: 2.0+
+- Compose Multiplatform: 1.10+
+- AGP: 9.0+ (Gradle 9.1+)
 
 ### iOS
 
@@ -304,10 +305,16 @@ fun rememberRiveComposition(
 
 ## Building
 
-This library uses Kotlin Multiplatform with the following plugins:
+The project has three modules:
+
+- **`library`** – The Rive CMP library (KMP with Android, iOS, JS)
+- **`sample`** – Shared sample UI and logic (KMP library; used by Android and iOS)
+- **`androidSample`** – Android app entry point (run this for the Android sample)
+
+The library uses Kotlin Multiplatform with the following plugins:
 
 - `kotlinMultiplatform`
-- `androidLibrary`
+- `androidMultiplatformLibrary` (AGP 9–compatible Android-KMP library plugin)
 - `composeMultiplatform`
 - `composeCompiler`
 - `spmForKmp` (for iOS Swift Package Manager integration)
@@ -319,9 +326,14 @@ This library uses Kotlin Multiplatform with the following plugins:
 # Build Android AAR
 ./gradlew :library:assembleRelease
 
+# Build and run the Android sample app
+./gradlew :androidSample:installDebug
+
 # Build iOS Framework
 ./gradlew :library:linkReleaseFrameworkIosArm64
 ```
+
+To run the sample in Android Studio, use the **androidSample** run configuration (not `sample`).
 
 ## Contributing
 
