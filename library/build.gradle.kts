@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
@@ -17,10 +17,15 @@ plugins {
 group = "dev.muazkadan"
 version = "0.3.2"
 kotlin {
-    androidTarget {
-        publishLibraryVariants("release")
+    androidLibrary {
+        namespace = "dev.muazkadan.rivecmp"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+        }
+        androidResources {
+            enable = true
         }
     }
     listOf(
@@ -84,14 +89,6 @@ kotlin {
     }
 }
 
-android {
-    namespace = "dev.muazkadan.rivecmp"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
-    }
-}
-
 mavenPublishing {
     publishToMavenCentral()
 
@@ -128,5 +125,5 @@ mavenPublishing {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
+    androidRuntimeClasspath(compose.uiTooling)
 }
