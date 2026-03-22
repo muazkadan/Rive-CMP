@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -132,21 +133,20 @@ fun CustomPullRefreshSample(
     }
 
     Box(modifier.pullRefresh(::onPull, ::onRelease)) {
-        if (scrollValue > 0) {
-            Box(
-                modifier = Modifier
-                    .height(height.dp)
-                    .offset(y = (-(height / 2 - scrollValue / 2).coerceIn(0f, height)).dp)
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-            ) {
-                CustomRiveAnimation(
-                    modifier = Modifier.fillMaxWidth().height(height.dp),
-                    composition = pullToRefreshAnimation,
-                    stateMachineName = "numberSimulation",
-                    fit = RiveFit.COVER
-                )
-            }
+        Box(
+            modifier = Modifier
+                .height(height.dp)
+                .offset(y = (-(height / 2 - scrollValue / 2).coerceIn(0f, height)).dp)
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .graphicsLayer { alpha = if (scrollValue > 0) 1f else 0f }
+        ) {
+            CustomRiveAnimation(
+                modifier = Modifier.fillMaxWidth().height(height.dp),
+                composition = pullToRefreshAnimation,
+                stateMachineName = "numberSimulation",
+                fit = RiveFit.COVER
+            )
         }
 
         LazyColumn(
@@ -263,22 +263,21 @@ fun ListItemUI(
             )
         }
 
-        if (offsetX < 0f || isTakingItem) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .fillMaxSize()
-                    .offset(x = (alligatorOffsetX - offsetX - 500).dp, y = (-120).dp)
-                    .scale(2.5f)
-            ) {
-                CustomRiveAnimation(
-                    modifier = Modifier.fillMaxSize(),
-                    composition = alligatorComposition,
-                    stateMachineName = "State Machine 1",
-                    fit = RiveFit.COVER,
-                    alignment = RiveAlignment.CENTER_LEFT
-                )
-            }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxSize()
+                .offset(x = (alligatorOffsetX - offsetX - 500).dp, y = (-120).dp)
+                .scale(2.5f)
+                .graphicsLayer { alpha = if (offsetX < 0f || isTakingItem) 1f else 0f }
+        ) {
+            CustomRiveAnimation(
+                modifier = Modifier.fillMaxSize(),
+                composition = alligatorComposition,
+                stateMachineName = "State Machine 1",
+                fit = RiveFit.COVER,
+                alignment = RiveAlignment.CENTER_LEFT
+            )
         }
     }
 }
