@@ -1,7 +1,8 @@
-@file:OptIn(ExperimentalSpmForKmpFeature::class)
+@file:OptIn(ExperimentalSpmForKmpFeature::class, ExperimentalWasmDsl::class)
 
 import io.github.frankois944.spmForKmp.swiftPackageConfig
 import io.github.frankois944.spmForKmp.utils.ExperimentalSpmForKmpFeature
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -56,6 +57,10 @@ kotlin {
         binaries.library()
     }
 
+    wasmJs {
+        browser()
+    }
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -81,6 +86,10 @@ kotlin {
         }
 
         jsMain.dependencies {
+            implementation(npm("@rive-app/canvas", "2.34.1"))
+        }
+
+        wasmJsMain.dependencies {
             implementation(npm("@rive-app/canvas", "2.34.1"))
         }
     }
