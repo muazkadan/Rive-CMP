@@ -1,3 +1,6 @@
+@file:OptIn(ExperimentalWasmDsl::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -35,6 +38,15 @@ kotlin {
         browser {
             commonWebpackConfig {
                 outputFileName = "composeApp.js"
+            }
+        }
+        binaries.executable()
+    }
+
+    wasmJs {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.wasm.js"
             }
         }
         binaries.executable()
