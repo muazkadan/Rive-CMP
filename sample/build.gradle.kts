@@ -34,7 +34,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":library"))
-            implementation(libs.materii.pullrefresh)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

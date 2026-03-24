@@ -8,14 +8,32 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -24,7 +42,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import dev.materii.pullrefresh.pullRefresh
 import dev.muazkadan.rivecmp.CustomRiveAnimation
 import dev.muazkadan.rivecmp.RiveCompositionSpec
 import dev.muazkadan.rivecmp.core.RiveAlignment
@@ -44,7 +61,6 @@ private const val ITEM_HEIGHT = 100f
 private const val SWIPE_THRESHOLD_DP = 120f
 private const val MAX_SWIPE_OFFSET_FACTOR = 1.3f
 
-@OptIn(ExperimentalRiveCmpApi::class)
 @Composable
 @Preview
 fun App() {
@@ -65,8 +81,6 @@ fun CustomPullRefreshSample(
     modifier: Modifier = Modifier
 ) {
     val refreshScope = rememberCoroutineScope()
-    val threshold = with(LocalDensity.current) { height.dp.toPx() }
-
     var refreshing by remember { mutableStateOf(false) }
     val items = remember { mutableStateListOf<ItemModel>() }
     LaunchedEffect(Unit) {
@@ -74,12 +88,12 @@ fun CustomPullRefreshSample(
             items.addAll(generateItemModels())
         }
     }
-    var currentDistance by remember { mutableStateOf(0f) }
+    val pullToRefreshState = rememberPullToRefreshState()
     val pullToRefreshAnimation by rememberRiveComposition(
         spec = { RiveCompositionSpec.byteArray(Res.readBytes("files/pull_to_refresh_use_case.riv")) }
     )
 
-    val progress = currentDistance / threshold
+    val progress = pullToRefreshState.distanceFraction.coerceAtLeast(0f)
     val scrollValue by animateFloatAsState(
         targetValue = height * progress,
         animationSpec = spring(
@@ -94,61 +108,51 @@ fun CustomPullRefreshSample(
         }
     }
 
-    // Refresh logic
+    LaunchedEffect(progress, refreshing, pullToRefreshAnimation) {
+        if (!refreshing) {
+            pullToRefreshAnimation?.setNumberInput(
+                stateMachineName = "numberSimulation",
+                name = "pull",
+                value = progress * 100f
+            )
+        }
+    }
+
     fun refresh() = refreshScope.launch {
         refreshing = true
         pullToRefreshAnimation?.setTriggerInput("numberSimulation", "advance")
         delay(1500)
         pullToRefreshAnimation?.setTriggerInput("numberSimulation", "advance")
         delay(1500)
-        animate(initialValue = currentDistance, targetValue = 0f) { value, _ ->
-            currentDistance = value
-        }
         refreshing = false
     }
 
-    // Pull-to-refresh gesture handling
-    fun onPull(pullDelta: Float): Float = when {
-        refreshing -> 0f
-        else -> {
-            val newOffset = (currentDistance + pullDelta).coerceAtLeast(0f)
-            val dragConsumed = newOffset - currentDistance
-            currentDistance = newOffset
-            pullToRefreshAnimation?.setNumberInput("numberSimulation", "pull", progress * 100)
-            dragConsumed
-        }
-    }
-
-    fun onRelease(velocity: Float): Float {
-        if (refreshing) return 0f
-        val targetValue = if (currentDistance > threshold) threshold else 0f
-        if (targetValue > 0f) refresh()
-        refreshScope.launch {
-            animate(initialValue = currentDistance, targetValue = targetValue) { value, _ ->
-                currentDistance = value
+    PullToRefreshBox(
+        modifier = modifier,
+        isRefreshing = refreshing,
+        onRefresh = ::refresh,
+        state = pullToRefreshState,
+        indicator = {
+            if (scrollValue > 0f) {
+                Box(
+                    modifier = Modifier
+                        .height(height.dp)
+                        .offset(y = (-(height / 2 - scrollValue / 2).coerceIn(0f, height)).dp)
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                ) {
+                    CustomRiveAnimation(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(height.dp),
+                        composition = pullToRefreshAnimation,
+                        stateMachineName = "numberSimulation",
+                        fit = RiveFit.COVER
+                    )
+                }
             }
         }
-        return if (velocity > 0f && currentDistance > 0f) velocity else 0f
-    }
-
-    Box(modifier.pullRefresh(::onPull, ::onRelease)) {
-        if (scrollValue > 0) {
-            Box(
-                modifier = Modifier
-                    .height(height.dp)
-                    .offset(y = (-(height / 2 - scrollValue / 2).coerceIn(0f, height)).dp)
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-            ) {
-                CustomRiveAnimation(
-                    modifier = Modifier.fillMaxWidth().height(height.dp),
-                    composition = pullToRefreshAnimation,
-                    stateMachineName = "numberSimulation",
-                    fit = RiveFit.COVER
-                )
-            }
-        }
-
+    ) {
         LazyColumn(
             modifier = Modifier
                 .statusBarsPadding()

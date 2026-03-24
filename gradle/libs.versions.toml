@@ -10,7 +10,6 @@ rive-android = "10.5.0"
 androidx-startup = "1.2.0"
 spmForKmp = "1.6.1"
 rive-ios = "6.15.2"
-pullrefresh = "1.4.0-beta03"
 dokka = "2.1.0"
 snizzors = "1.0.0-cmp1.9"
 
@@ -21,7 +20,6 @@ androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:life
 androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 rive-android = { group = "app.rive", name = "rive-android", version.ref = "rive-android" }
 androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidx-startup" }
-materii-pullrefresh = { group = "dev.materii.pullrefresh", name = "pullrefresh", version.ref = "pullrefresh" }
 snizzors = { group = "com.infiniteretry.snizzors", name = "snizzors", version.ref = "snizzors" }
 
 [plugins]
