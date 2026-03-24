@@ -31,6 +31,15 @@ kotlin {
         }
     }
 
+    js(IR) {
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+            }
+        }
+        binaries.executable()
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(project(":library"))
