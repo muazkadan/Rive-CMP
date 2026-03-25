@@ -383,5 +383,3 @@ limitations under the License.
 - [rive-ios](https://github.com/rive-app/rive-ios) for iOS implementation
 - [@rive-app/canvas](https://www.npmjs.com/package/@rive-app/canvas) for Web implementation
 - [spm4kmp](https://github.com/frankois944/spm4kmp) for Swift Package Manager integration
-- [Snizzors](https://github.com/Infinite-Retry/Snizzors) for enabling transparent UIViews in
-  Compose Multiplatform
