@@ -8,7 +8,7 @@ compose-activity = "1.13.0"
 androidx-lifecycle = "2.10.0"
 rive-android = "10.5.0"
 androidx-startup = "1.2.0"
-spmForKmp = "1.6.1"
+spmForKmp = "1.7.0"
 rive-ios = "6.15.2"
 dokka = "2.2.0"
 
