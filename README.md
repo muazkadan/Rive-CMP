@@ -13,6 +13,9 @@ use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS,
 
 <img src="images/banner.png" alt="Rive CMP Banner"></img>
 
+> [!IMPORTANT]
+> This project is built and maintained by the open-source community, and is not an official Rive product or supported by Rive.
+
 > **⚠️ EXPERIMENTAL STATUS**
 >
 > This library is currently in an experimental state. Features, APIs, and implementation details may
