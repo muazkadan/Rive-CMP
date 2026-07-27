@@ -101,6 +101,7 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
+            runtimeOnly(project(":runtime-macos-arm64"))
         }
     }
 }
