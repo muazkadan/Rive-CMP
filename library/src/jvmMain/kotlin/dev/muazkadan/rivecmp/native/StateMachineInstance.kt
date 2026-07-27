@@ -30,11 +30,11 @@ public class StateMachineInstance(unsafeCppPointer: Long) :
      * properties of the instance will be reflected in the bindings of this state machine.
      *
      * Assigning will apply to both the [StateMachineInstance] and the parent [Artboard]. Assigning
-     * null will do nothing.
+     * null detaches the currently bound instance.
      */
     public var viewModelInstance: ViewModelInstance? = null
         set(value) {
-            value?.let { cppSetViewModelInstance(cppPointer, it.cppPointer) }
+            cppSetViewModelInstance(cppPointer, value?.cppPointer ?: NULL_POINTER)
             field = value
         }
 

@@ -1,9 +1,12 @@
 #include <jni.h>
 #include "jni_refs.hpp"
 #include "helpers/general.hpp"
+#include "helpers/jni_resource.hpp"
 
 namespace rive_desktop {
-    jclass GetClass(const char *name) { return GetJNIEnv()->FindClass(name); }
+    jclass GetClass(const char *name) {
+        return FindClass(GetJNIEnv(), name).release();
+    }
 
     jmethodID GetMethodId(jclass clazz, const char *name, const char *sig) {
         JNIEnv *env = GetJNIEnv();
@@ -76,12 +79,6 @@ namespace rive_desktop {
     }
 
     jclass GetLoopClass() { return GetClass("dev/muazkadan/rivecmp/native/Loop"); }
-
-    jfieldID GetNoneLoopField() {
-        return GetStaticFieldId(GetLoopClass(),
-                                "NONE",
-                                "Ldev/muazkadan/rivecmp/native/Loop;");
-    }
 
     jfieldID GetOneShotLoopField() {
         return GetStaticFieldId(GetLoopClass(),

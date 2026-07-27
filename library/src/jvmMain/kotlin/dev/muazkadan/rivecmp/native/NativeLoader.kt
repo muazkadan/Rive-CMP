@@ -34,12 +34,9 @@ public object NativeLoader {
     public fun loadLibraryFromJar(baseName: String) {
         val nativeLibFileName = "lib$baseName$suffix.$extension"
 
-        val extractionFile = File(System.getProperty("user.home"))
-            .resolve(".$baseName")
-            .resolve("runtime")
-            .apply { mkdirs() }
+        val tempDir = java.nio.file.Files.createTempDirectory("$baseName-runtime").toFile()
             .apply { deleteOnExit() }
-            .resolve(nativeLibFileName)
+        val extractionFile = tempDir.resolve(nativeLibFileName)
 
         checkNotNull(
                 javaClass.classLoader.getResourceAsStream(nativeLibFileName)?.use { input ->

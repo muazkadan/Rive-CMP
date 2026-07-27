@@ -33,15 +33,13 @@ Java_dev_muazkadan_rivecmp_native_SMIInput_cppIsTrigger(JNIEnv *,
     return input->input()->is<rive::StateMachineTrigger>();
 }
 
-jboolean JNICALL
+JNIEXPORT jboolean JNICALL
 Java_dev_muazkadan_rivecmp_native_SMIInput_cppIsNumber(JNIEnv *,
                                                        jobject,
                                                        jlong ref) {
     auto *input = reinterpret_cast<rive::SMIInput *>(ref);
     return input->input()->is<rive::StateMachineNumber>();
 }
-
-JNIEXPORT
 
 JNIEXPORT jboolean JNICALL
 Java_dev_muazkadan_rivecmp_native_SMIBoolean_cppValue(JNIEnv *,

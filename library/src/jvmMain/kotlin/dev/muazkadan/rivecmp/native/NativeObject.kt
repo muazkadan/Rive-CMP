@@ -148,7 +148,7 @@ public abstract class NativeObject(initialPointer: Long) : RefCount {
             // If anyone is holding a reference to one of this object's dependents, they will need
             // to also `release()` it to clean up memory.
             forEach(RefCount::release)
-//            clear()
+            clear()
         }
         cppDelete(unsafeCppPointer.load())
         unsafeCppPointer.store(NULL_POINTER)

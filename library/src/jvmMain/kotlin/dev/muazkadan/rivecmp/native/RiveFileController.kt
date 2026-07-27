@@ -224,7 +224,8 @@ public class RiveFileController(
     private fun processAllInputs() {
         // Gather all state machines that need playing and do that only once.
         val playableSet = mutableSetOf<StateMachineInstance>()
-        // No need to lock this: this is being called from `advance()` which is `synchronized(file)`
+        // No locking needed: this controller must only be driven from a single thread (the
+        // caller's render/UI thread), unlike rive-android's worker+UI thread split.
         while (changedInputs.isNotEmpty()) {
             val input = changedInputs.removeFirst()
             if (input.nestedArtboardPath == null) {

@@ -11,8 +11,8 @@ public enum class Loop {
          */
         public fun fromIndex(index: Int): Loop {
             val maxIndex = entries.size
-            if (index < 0 || index > maxIndex)
-                throw IndexOutOfBoundsException("Invalid Loop index value $index. It must be between 0 and $maxIndex")
+            if (index < 0 || index >= maxIndex)
+                throw IndexOutOfBoundsException("Invalid Loop index value $index. It must be between 0 and ${maxIndex - 1}")
 
             return entries[index]
         }

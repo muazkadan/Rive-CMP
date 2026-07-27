@@ -15,7 +15,7 @@ extern "C" {
 #endif
 using namespace rive_desktop;
 
-jint JNI_OnLoad(JavaVM *jvm, void *) {
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *) {
     // Assign the global JVM
     g_JVM = jvm;
     // Standard JNI version to return on Desktop

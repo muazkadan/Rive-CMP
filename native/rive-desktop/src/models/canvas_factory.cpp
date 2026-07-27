@@ -223,18 +223,19 @@ void LocalSkiaRenderPaint::shader(rcp<RenderShader> rsh) {
 }
 
 void CanvasRenderer::save() {
-    m_Canvas->save();
+    if (isBound()) m_Canvas->save();
     m_opacityStack.push_back(m_opacityStack.back());
 }
 
 void CanvasRenderer::restore() {
-    m_Canvas->restore();
+    if (isBound()) m_Canvas->restore();
     if (m_opacityStack.size() > 1) {
         m_opacityStack.pop_back();
     }
 }
 
 void CanvasRenderer::transform(const Mat2D &transform) {
+    if (!isBound()) return;
     m_Canvas->concat(ToSkia::convert(transform));
 }
 
@@ -243,6 +244,7 @@ void CanvasRenderer::modulateOpacity(float opacity) {
 }
 
 void CanvasRenderer::drawPath(RenderPath *path, RenderPaint *paint) {
+    if (!isBound()) return;
     auto skiaRenderPath = static_cast<LocalSkiaRenderPath *>(path);
     auto skiaRenderPaint = static_cast<LocalSkiaRenderPaint *>(paint);
 
@@ -281,6 +283,7 @@ void CanvasRenderer::drawPath(RenderPath *path, RenderPaint *paint) {
 }
 
 void CanvasRenderer::clipPath(RenderPath *path) {
+    if (!isBound()) return;
     auto skPath = static_cast<LocalSkiaRenderPath *>(path);
     m_Canvas->clipPath(skPath->path(), true);
 }
@@ -289,6 +292,7 @@ void CanvasRenderer::drawImage(const RenderImage *image,
                                const rive::ImageSampler,
                                BlendMode blendMode,
                                float opacity) {
+    if (!isBound()) return;
     auto skiaImage = static_cast<const LocalSkiaRenderImage *>(image);
 
     float finalOpacity = std::max(0.0f, opacity * m_opacityStack.back());
@@ -309,6 +313,7 @@ void CanvasRenderer::drawImageMesh(const RenderImage *image,
                                    uint32_t indexCount,
                                    BlendMode blendMode,
                                    float opacity) {
+    if (!isBound()) return;
     auto skImage = static_cast<const LocalSkiaRenderImage *>(image);
     auto skVertices = static_cast<DataRenderBuffer *>(vertices.get());
     auto skUVCoords = static_cast<DataRenderBuffer *>(uvCoords.get());

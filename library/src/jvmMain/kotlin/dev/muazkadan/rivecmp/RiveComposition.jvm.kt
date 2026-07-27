@@ -13,7 +13,12 @@ actual class RiveComposition internal actual constructor(
     // blocking here to read bytes synchronously is safe and keeps `RiveComposition` ready to use
     // (with its native `File` already imported) as soon as construction returns.
     internal val file: File = when (val spec = spec) {
-        is RiveUrlCompositionSpec -> File(URI(spec.url).toURL().readBytes())
+        is RiveUrlCompositionSpec -> File(
+            URI(spec.url).toURL().openConnection().apply {
+                connectTimeout = 10_000
+                readTimeout = 10_000
+            }.getInputStream().use { it.readBytes() },
+        )
         is RiveByteArrayCompositionSpec -> File(spec.byteArray)
         else -> throw IllegalArgumentException("Unsupported composition spec '$spec'")
     }

@@ -181,13 +181,6 @@ set_target_properties(skia-lib PROPERTIES IMPORTED_LOCATION
 )
 target_link_libraries(rive-desktop skia-lib)
 
-if (NOT DEFINED ENV{JAVA_HOME})
-    message(FATAL_ERROR "JAVA_HOME must be set")
-endif ()
-
-set(JAVA_INCLUDE_PATH "$ENV{JAVA_HOME}/include")
-set(JAVA_AWT_INCLUDE_PATH "$ENV{JAVA_HOME}/include")
-
 if (APPLE)
     message(STATUS "Linking macOS CoreFoundation and CoreText frameworks")
     target_link_libraries(rive-desktop
@@ -197,21 +190,6 @@ if (APPLE)
             "-framework Foundation"
             "-framework AppKit"
     )
-
-    set(JAVA_AWT_LIBRARY "$ENV{JAVA_HOME}/lib/libjawt.dylib")
-    set(JAVA_JVM_LIBRARY "$ENV{JAVA_HOME}/lib/server/libjvm.dylib")
-
-    set(JAVA_INCLUDE_PATH2 "$ENV{JAVA_HOME}/include/darwin")
-elseif (UNIX)
-    set(JAVA_AWT_LIBRARY "$ENV{JAVA_HOME}/lib/libjawt.so")
-    set(JAVA_JVM_LIBRARY "$ENV{JAVA_HOME}/lib/server/libjvm.so")
-
-    set(JAVA_INCLUDE_PATH2 "$ENV{JAVA_HOME}/include/linux")
-elseif (WIN32)
-    set(JAVA_AWT_LIBRARY "$ENV{JAVA_HOME}/lib/jawt.lib")
-    set(JAVA_JVM_LIBRARY "$ENV{JAVA_HOME}/lib/jvm.lib")
-
-    set(JAVA_INCLUDE_PATH2 "$ENV{JAVA_HOME}/include/win32")
 endif ()
 
 find_package(JNI REQUIRED)

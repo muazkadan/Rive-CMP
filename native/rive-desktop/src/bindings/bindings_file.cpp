@@ -55,9 +55,7 @@ Java_dev_muazkadan_rivecmp_native_File_cppArtboardByIndex(JNIEnv *,
     return (jlong) artboard.release();
 }
 
-JNIEXPORT
-
-jstring JNICALL
+JNIEXPORT jstring JNICALL
 Java_dev_muazkadan_rivecmp_native_File_cppArtboardNameByIndex(JNIEnv *env,
                                                                          jobject,
                                                                          jlong ref,
@@ -65,6 +63,7 @@ Java_dev_muazkadan_rivecmp_native_File_cppArtboardNameByIndex(JNIEnv *env,
     auto file = reinterpret_cast<rive::File *>(ref);
 
     auto artboard = file->artboard(index);
+    if (artboard == nullptr) return nullptr;
     auto name = artboard->name();
     return env->NewStringUTF(name.c_str());
 }

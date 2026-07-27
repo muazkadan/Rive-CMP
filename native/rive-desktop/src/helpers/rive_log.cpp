@@ -113,27 +113,27 @@ namespace rive_desktop {
             auto getEnvStat = g_JVM->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
             if (getEnvStat != JNI_OK) {
                 LOGE("Logging error: Unable to get JNIEnv for RiveLog");
-                return;
-            }
-
-            // Create Kotlin strings for tag and message
-            auto jTag = MakeJString(env, tag);
-            auto jMessage = MakeJString(env, buffer);
-
-            // Call the static method
-            env->CallStaticVoidMethod(g_riveLogClass,
-                                      methodID,
-                                      jTag.get(),
-                                      jMessage.get());
-
-            // Check for exceptions (but don't throw - logging shouldn't crash)
-            if (env->ExceptionCheck()) {
-                LOGE("Logging error: Exception occurred in RiveLog method");
-                env->ExceptionDescribe(); // Log the exception details
-                env->ExceptionClear();
-                // Fall through to LOG macros fallback
+                // Fall through to LOG macros fallback so the message is still emitted.
             } else {
-                return; // Successfully logged via RiveLog
+                // Create Kotlin strings for tag and message
+                auto jTag = MakeJString(env, tag);
+                auto jMessage = MakeJString(env, buffer);
+
+                // Call the static method
+                env->CallStaticVoidMethod(g_riveLogClass,
+                                          methodID,
+                                          jTag.get(),
+                                          jMessage.get());
+
+                // Check for exceptions (but don't throw - logging shouldn't crash)
+                if (env->ExceptionCheck()) {
+                    LOGE("Logging error: Exception occurred in RiveLog method");
+                    env->ExceptionDescribe(); // Log the exception details
+                    env->ExceptionClear();
+                    // Fall through to LOG macros fallback
+                } else {
+                    return; // Successfully logged via RiveLog
+                }
             }
         }
 

@@ -52,7 +52,10 @@ public class FallbackAssetLoader(
 ) : FileAssetLoader() {
 
     init {
-        loaders.forEach(dependencies::add)
+        loaders.forEach { loader ->
+            loader.acquire()
+            dependencies.add(loader)
+        }
     }
 
     override fun loadContents(asset: FileAsset, inBandBytes: ByteArray): Boolean =
@@ -68,7 +71,11 @@ public class CDNAssetLoader : FileAssetLoader() {
         if (url.isEmpty()) return false
 
         return try {
-            asset.decode(URI(url).toURL().readBytes())
+            val connection = URI(url).toURL().openConnection().apply {
+                connectTimeout = 10_000
+                readTimeout = 10_000
+            }
+            asset.decode(connection.getInputStream().use { it.readBytes() })
         }
         catch (e: Throwable) {
             RiveLog.e("CDNAssetLoader", "Failed to load CDN asset $url: ${e.message}")

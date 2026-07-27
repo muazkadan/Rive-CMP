@@ -27,6 +27,7 @@ Java_dev_muazkadan_rivecmp_native_FileAsset_cppDecode(
 
     auto *fileFactory = GetFactory();
     auto *jAssetBytes = env->GetByteArrayElements(assetBytes, nullptr);
+    if (jAssetBytes == nullptr) return JNI_FALSE;
     auto length = JIntToSizeT(env->GetArrayLength(assetBytes));
 
     // Turn into a SimpleArray so audio files can steal the bytes if they

@@ -86,9 +86,9 @@ namespace rive_desktop {
     /* static  */
     jthrowable JNIExceptionHandler::get_cause(JNIEnv *env,
                                               jthrowable throwable) {
-        jclass throwableClass = env->FindClass("java/lang/Throwable");
+        JniResource<jclass> throwableClass = FindClass(env, "java/lang/Throwable");
         jmethodID midGetCause =
-                env->GetMethodID(throwableClass, "getCause", "()Ljava/lang/Throwable;");
+                env->GetMethodID(throwableClass.get(), "getCause", "()Ljava/lang/Throwable;");
         return (jthrowable) env->CallObjectMethod(throwable, midGetCause);
     }
 
@@ -114,9 +114,6 @@ namespace rive_desktop {
         JniResource<jobject> newException =
                 MakeObject(env, throwableClass.get(), midInit, newMessage.get());
         env->Throw(reinterpret_cast<jthrowable>(newException.get()));
-
-        // Detach thread so the app can end.
-        DetachThread();
     }
 
     /* static  */

@@ -27,7 +27,7 @@ import kotlin.concurrent.atomics.incrementAndFetch
  */
 public class File(
     bytes: ByteArray,
-    public val fileAssetLoader: FileAssetLoader? = CDNAssetLoader(),
+    public val fileAssetLoader: FileAssetLoader? = defaultAssetLoader,
 ) : NativeObject(NULL_POINTER) {
 
     init {
@@ -131,5 +131,9 @@ public class File(
             throw ViewModelException("No default ViewModel found for artboard ${artboard.name}.")
 
         return ViewModel(vmPointer).also { dependencies.add(it) }
+    }
+
+    public companion object {
+        public val defaultAssetLoader: FileAssetLoader by lazy { CDNAssetLoader() }
     }
 }

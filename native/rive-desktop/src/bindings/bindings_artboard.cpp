@@ -48,6 +48,7 @@ Java_dev_muazkadan_rivecmp_native_Artboard_cppAnimationNameByIndex(
     jint index) {
     auto artboard = reinterpret_cast<rive::ArtboardInstance *>(ref);
     auto *animation = artboard->animation(index);
+    if (animation == nullptr) return nullptr;
     auto name = animation->name();
 
     return env->NewStringUTF(name.c_str());
@@ -84,6 +85,7 @@ Java_dev_muazkadan_rivecmp_native_Artboard_cppStateMachineNameByIndex(
     auto artboard = reinterpret_cast<rive::ArtboardInstance *>(ref);
 
     auto *stateMachine = artboard->stateMachine(index);
+    if (stateMachine == nullptr) return nullptr;
     auto name = stateMachine->name();
 
     return env->NewStringUTF(name.c_str());

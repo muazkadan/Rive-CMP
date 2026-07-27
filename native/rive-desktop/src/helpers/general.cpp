@@ -124,6 +124,9 @@ namespace rive_desktop {
             return {};
         }
         auto *cStr = env->GetStringUTFChars(jStr, nullptr);
+        if (cStr == nullptr) {
+            return {};
+        }
         auto str = std::string(cStr);
         env->ReleaseStringUTFChars(jStr, cStr);
         return str;

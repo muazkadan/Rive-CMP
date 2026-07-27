@@ -61,6 +61,10 @@ Java_dev_muazkadan_rivecmp_native_StateMachineInstance_cppSetViewModelInstance(
     jlong ref,
     jlong viewModelInstanceRef) {
     auto stateMachine = reinterpret_cast<rive::StateMachineInstance *>(ref);
+    if (viewModelInstanceRef == 0) {
+        stateMachine->bindViewModelInstance(nullptr);
+        return;
+    }
     auto instance = reinterpret_cast<rive::ViewModelInstanceRuntime *>(
         viewModelInstanceRef);
     stateMachine->bindViewModelInstance(instance->instance());

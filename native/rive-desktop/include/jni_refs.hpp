@@ -18,7 +18,6 @@ namespace rive_desktop
     extern jmethodID GetShortConstructor();
 
     extern jclass GetLoopClass();
-    extern jfieldID GetNoneLoopField();
     extern jfieldID GetOneShotLoopField();
     extern jfieldID GetLoopLoopField();
     extern jfieldID GetPingPongLoopField();

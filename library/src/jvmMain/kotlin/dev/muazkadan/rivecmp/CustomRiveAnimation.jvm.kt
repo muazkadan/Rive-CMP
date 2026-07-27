@@ -64,7 +64,7 @@ actual fun CustomRiveAnimation(
         }
     }
 
-    Spacer(modifier.then(RiveRendererElement(controller)))
+    Spacer(modifier.then(RiveRendererElement(controller, overlay)))
 }
 
 @ExperimentalRiveCmpApi
@@ -132,12 +132,14 @@ actual fun CustomRiveAnimation(
 
 private data class RiveRendererElement(
     private val controller: RiveFileController,
+    private val overlay: Boolean,
 ) : ModifierNodeElement<RiveRendererNode>() {
 
-    override fun create(): RiveRendererNode = RiveRendererNode(controller)
+    override fun create(): RiveRendererNode = RiveRendererNode(controller, overlay)
 
     override fun update(node: RiveRendererNode) {
         node.controller = controller
+        node.overlay = overlay
     }
 }
 
@@ -149,6 +151,7 @@ private data class RiveRendererElement(
  */
 private class RiveRendererNode(
     controller: RiveFileController,
+    overlay: Boolean,
 ) : Modifier.Node(), DrawModifierNode, LayoutAwareModifierNode {
 
     var controller: RiveFileController = controller
@@ -157,6 +160,8 @@ private class RiveRendererNode(
             field = value
             bindBuffer()
         }
+
+    var overlay: Boolean = overlay
 
     private var bitmap: Bitmap? = null
     private var imageBitmap: ImageBitmap? = null
@@ -206,7 +211,12 @@ private class RiveRendererNode(
     }
 
     override fun ContentDrawScope.draw() {
-        imageBitmap?.let(::drawImage)
-        drawContent()
+        if (overlay) {
+            drawContent()
+            imageBitmap?.let(::drawImage)
+        } else {
+            imageBitmap?.let(::drawImage)
+            drawContent()
+        }
     }
 }

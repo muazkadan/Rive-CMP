@@ -3,6 +3,7 @@
 #include <jni.h>
 
 #include "helpers/general.hpp"
+#include "helpers/jni_resource.hpp"
 #include "helpers/rive_log.hpp"
 #include "rive/factory.hpp"
 #include "rive/file_asset_loader.hpp"
@@ -23,44 +24,39 @@ namespace rive_desktop {
 
         static jobject MakeKtAsset(JNIEnv *env,
                                    rive::FileAsset &asset) {
-            jclass assetClass = nullptr;
+            JniResource<jclass> assetClass(nullptr, env);
             if (asset.is<rive::ImageAsset>()) {
-                assetClass =
-                        env->FindClass("dev/muazkadan/rivecmp/native/ImageAsset");
+                assetClass = FindClass(env, "dev/muazkadan/rivecmp/native/ImageAsset");
             } else if (asset.is<rive::FontAsset>()) {
-                assetClass =
-                        env->FindClass("dev/muazkadan/rivecmp/native/FontAsset");
+                assetClass = FindClass(env, "dev/muazkadan/rivecmp/native/FontAsset");
             } else if (asset.is<rive::AudioAsset>()) {
-                assetClass =
-                        env->FindClass("dev/muazkadan/rivecmp/native/AudioAsset");
+                assetClass = FindClass(env, "dev/muazkadan/rivecmp/native/AudioAsset");
             } else {
                 RiveLogW("RiveN/AssetLoader",
                          "Trying to make unknown file asset type %d",
                          asset.typeKey);
             }
 
-            if (!assetClass) {
+            if (!assetClass.get()) {
                 RiveLogE("RiveN/AssetLoader",
                          "MakeKtAsset() failed to find FileAsset class");
                 return nullptr;
             }
 
             jmethodID fileAssetConstructor =
-                    env->GetMethodID(assetClass, "<init>", "(J)V");
+                    env->GetMethodID(assetClass.get(), "<init>", "(J)V");
             if (!fileAssetConstructor) {
                 RiveLogE("RiveN/AssetLoader",
                          "MakeKtAsset() failed to find FileAsset constructor");
-                env->DeleteLocalRef(assetClass);
                 return nullptr;
             }
 
-            jobject ktFileAsset = env->NewObject(assetClass,
+            jobject ktFileAsset = env->NewObject(assetClass.get(),
                                                  fileAssetConstructor,
                                                  reinterpret_cast<jlong>(&asset));
             if (!ktFileAsset) {
                 RiveLogE("RiveN/AssetLoader",
                          "MakeKtAsset() failed to create FileAsset");
-                env->DeleteLocalRef(assetClass);
                 return nullptr;
             }
             return ktFileAsset;
