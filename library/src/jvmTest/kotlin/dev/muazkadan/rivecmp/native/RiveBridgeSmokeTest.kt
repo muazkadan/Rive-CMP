@@ -1,7 +1,6 @@
 package dev.muazkadan.rivecmp.native
 
 import dev.muazkadan.rivecmp.RiveDesktop
-import java.io.File as JavaFile
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -15,7 +14,10 @@ class RiveBridgeSmokeTest {
     @Test
     fun importsAndInspectsARealRivFile() {
         RiveDesktop.init()
-        val bytes = JavaFile("../sample/src/commonMain/composeResources/files/mode_switch.riv").readBytes()
+        val url = requireNotNull(javaClass.classLoader.getResource("mode_switch.riv")) {
+            "Test asset 'mode_switch.riv' not found in resources"
+        }
+        val bytes = url.readBytes()
 
         val file = File(bytes)
         try {
