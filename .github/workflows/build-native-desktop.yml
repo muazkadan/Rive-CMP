@@ -65,6 +65,15 @@ jobs:
       - name: Configure
         run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
 
+      - name: Locate the static libs Premake produced
+        run: |
+          # CMake links against native/rive-desktop/out/<arch>_<config>/lib*.a.
+          # Show where build_rive.sh actually wrote them so a path mismatch is
+          # diagnosable from the log rather than by guesswork.
+          find submodules/rive-runtime native/rive-desktop -name 'librive*.a' 2>/dev/null | head -40 || true
+          echo "--- expected by CMake ---"
+          ls -la native/rive-desktop/out/arm64_release/ 2>/dev/null || echo "(missing)"
+
       - name: Build
         run: cmake --build native/rive-desktop/build
 
