@@ -19,8 +19,11 @@ on:
 
 jobs:
   build:
-    # macOS 15 runners are arm64, matching the shipped librive-desktoparm64.dylib.
-    runs-on: macos-15
+    # macOS 14 runners are arm64 (matching the shipped librive-desktoparm64.dylib)
+    # and ship an older Xcode/SDK. The Skia checkout pinned by rive-runtime vendors
+    # a zlib whose `#define fdopen(fd,mode) NULL` breaks against the macOS 15.5 SDK's
+    # own fdopen declaration, so the newer image cannot build it.
+    runs-on: macos-14
     timeout-minutes: 120
 
     steps:
@@ -36,6 +39,13 @@ jobs:
         with:
           distribution: temurin
           java-version: 24
+
+      - name: Report the active toolchain
+        run: |
+          echo "Available Xcode versions:"
+          ls -d /Applications/Xcode*.app 2>/dev/null || true
+          xcodebuild -version || true
+          xcrun --show-sdk-version || true
 
       - name: Install native build tools
         run: brew install ninja premake
