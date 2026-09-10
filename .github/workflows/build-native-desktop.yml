@@ -52,7 +52,15 @@ jobs:
 
       - name: Build Skia for arm64
         working-directory: submodules/rive-runtime/skia/dependencies
-        run: ./make_skia_macos.sh arm64
+        run: |
+          # make_skia_macos.sh finishes by uploading its build cache to Rive's own
+          # S3 bucket (s3://2d-public/archives), which we have no credentials for.
+          # That upload exits non-zero and would fail the step even though the
+          # build succeeded, so ignore the script's status and assert on the
+          # artifact CMakeLists.txt actually links against instead.
+          ./make_skia_macos.sh arm64 || echo "make_skia_macos.sh exited non-zero (expected: S3 cache upload)"
+          test -f skia/out/macosx/arm64/libskia.a
+          ls -lh skia/out/macosx/arm64/libskia.a
 
       - name: Configure
         run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
