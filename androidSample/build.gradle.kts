@@ -31,5 +31,6 @@ dependencies {
     implementation(project(":sample"))
     implementation(libs.androidx.activity.compose)
     implementation(compose.components.resources)
+    implementation(compose.components.uiToolingPreview)
     debugImplementation(compose.uiTooling)
 }
