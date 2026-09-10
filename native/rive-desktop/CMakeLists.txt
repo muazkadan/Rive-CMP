@@ -19,16 +19,17 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 add_library(rive-desktop SHARED ${SOURCES})
 
 # List of static libraries
-# These must match what `build_rive.sh ... -- rive_cpp_runtime` actually emits
-# into out/<arch>_<config>. The pinned rive-runtime builds rive_cpp_runtime and
-# does not produce rive_pls_renderer; the bridge renders through Skia's CPU
-# rasterizer and references no PLS/Rive Renderer symbols.
+# These must match what `build_rive.sh ... -- rive_cpp_runtime` emits into
+# out/<arch>_<config>. The pinned rive-runtime does not produce
+# rive_pls_renderer, and the bridge renders through Skia's CPU rasterizer so
+# references no PLS/Rive Renderer symbols. librive_cpp_runtime.a is deliberately
+# not linked either: it is an aggregate archive containing the other .a files as
+# members, which ld rejects ("librive.a not a mach-o file"). Link the components.
 set(static_libs
         rive
         rive_harfbuzz
         rive_sheenbidi
         rive_yoga
-        rive_cpp_runtime
 )
 
 # Enable C++17
