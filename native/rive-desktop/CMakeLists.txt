@@ -19,17 +19,19 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 add_library(rive-desktop SHARED ${SOURCES})
 
 # List of static libraries
-# These must match what `build_rive.sh ... -- rive_cpp_runtime` emits into
-# out/<arch>_<config>. The pinned rive-runtime does not produce
-# rive_pls_renderer, and the bridge renders through Skia's CPU rasterizer so
-# references no PLS/Rive Renderer symbols. librive_cpp_runtime.a is deliberately
-# not linked either: it is an aggregate archive containing the other .a files as
-# members, which ld rejects ("librive.a not a mach-o file"). Link the components.
+# These must match what the premake invocation below emits into
+# out/<arch>_<config>. rive_pls_renderer is required even though this bridge
+# renders through Skia's CPU rasterizer: with WITH_SCRIPTING=ON, librive.a's
+# Luau shader bindings reference rive::gpu::RenderContext and RiveRenderer.
+# librive_cpp_runtime.a is deliberately not listed - it is an aggregate archive
+# whose members are these .a files, which ld rejects ("librive.a not a mach-o
+# file"). Link the components instead.
 set(static_libs
         rive
         rive_harfbuzz
         rive_sheenbidi
         rive_yoga
+        rive_pls_renderer
 )
 
 # Enable C++17
@@ -149,7 +151,7 @@ set_target_properties(rive-desktop PROPERTIES
 
 # Build the Rive C++ runtime and its dependencies as static .a libs
 execute_process(
-        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} -- rive_cpp_runtime
+        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} -- rive_cpp_runtime rive_pls_renderer
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         RESULT_VARIABLE SCRIPT_RESULT
         OUTPUT_VARIABLE SCRIPT_OUTPUT
