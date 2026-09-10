@@ -1,0 +1,89 @@
+name: Build native desktop runtime
+
+# Deliberately NOT run on every push/PR: this builds Skia and the Rive C++ runtime
+# from source and takes a long time, while the output only changes when the JNI
+# bridge or the pinned rive-runtime commit changes.
+on:
+  workflow_dispatch:
+    inputs:
+      upload_only:
+        description: "Build and upload the artifact without failing on checksum drift"
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
+  schedule:
+    # Monthly drift check: does the pinned commit still build and pass the smoke test?
+    - cron: "0 4 1 * *"
+
+jobs:
+  build:
+    # macOS 15 runners are arm64, matching the shipped librive-desktoparm64.dylib.
+    runs-on: macos-15
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Record the pinned rive-runtime commit
+        run: |
+          git -C submodules/rive-runtime rev-parse HEAD | tee pinned-rive-runtime.txt
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - name: Install native build tools
+        run: brew install ninja premake
+
+      - name: Build Skia for arm64
+        working-directory: submodules/rive-runtime/skia/dependencies
+        run: ./make_skia_macos.sh arm64
+
+      - name: Configure
+        run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build native/rive-desktop/build
+
+      - name: Fingerprint the freshly built binary
+        id: fingerprint
+        run: |
+          BIN=$(find native/rive-desktop/build -name 'librive-desktoparm64.dylib' | head -1)
+          echo "Built: $BIN"
+          shasum -a 256 "$BIN" | tee built.sha256
+          echo "path=$BIN" >> "$GITHUB_OUTPUT"
+
+      - name: Run the JNI smoke test against the freshly built binary
+        run: |
+          cp "${{ steps.fingerprint.outputs.path }}" \
+             runtime-macos-arm64/src/main/resources/librive-desktoparm64.dylib
+          ./gradlew :library:jvmTest --rerun-tasks
+
+      - name: Compare against the committed binary
+        if: ${{ !inputs.upload_only }}
+        run: |
+          # The committed dylib predates the pin and is not expected to match yet.
+          # Once it has been replaced by an artifact from this workflow, a mismatch
+          # here means the pinned commit or the bridge changed without the binary
+          # and its checksum in native/rive-desktop/README.md being updated.
+          COMMITTED=$(git show HEAD:runtime-macos-arm64/src/main/resources/librive-desktoparm64.dylib | shasum -a 256 | cut -d' ' -f1)
+          BUILT=$(cut -d' ' -f1 < built.sha256)
+          echo "committed: $COMMITTED"
+          echo "built:     $BUILT"
+          if [ "$COMMITTED" != "$BUILT" ]; then
+            echo "::warning::Built binary differs from the committed one. If this is the first authoritative build, replace the committed dylib with this artifact and update the checksum in native/rive-desktop/README.md."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: librive-desktoparm64
+          path: |
+            ${{ steps.fingerprint.outputs.path }}
+            built.sha256
+            pinned-rive-runtime.txt
+          if-no-files-found: error
