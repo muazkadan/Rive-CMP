@@ -53,8 +53,10 @@ target_compile_definitions(rive-desktop PRIVATE
         SK_DISABLE_EFFECT_DESERIALIZATION)
 
 # Configure for monorepo vs. rive-desktop repo
-if (EXISTS "${PROJECT_SOURCE_DIR}/../submodules/rive-runtime")
-    set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/..")
+if (EXISTS "${PROJECT_SOURCE_DIR}/../../submodules/rive-runtime")
+    # PROJECT_SOURCE_DIR is native/rive-desktop, so the repo root - which is where
+    # submodules/rive-runtime lives - is two levels up, not one.
+    set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/../..")
     set(RIVE_RUNTIME_DIR "${PACKAGES_DIR}/submodules/rive-runtime")
 else ()
     set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
