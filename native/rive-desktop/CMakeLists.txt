@@ -19,12 +19,16 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 add_library(rive-desktop SHARED ${SOURCES})
 
 # List of static libraries
+# These must match what `build_rive.sh ... -- rive_cpp_runtime` actually emits
+# into out/<arch>_<config>. The pinned rive-runtime builds rive_cpp_runtime and
+# does not produce rive_pls_renderer; the bridge renders through Skia's CPU
+# rasterizer and references no PLS/Rive Renderer symbols.
 set(static_libs
         rive
         rive_harfbuzz
         rive_sheenbidi
         rive_yoga
-        rive_pls_renderer
+        rive_cpp_runtime
 )
 
 # Enable C++17
