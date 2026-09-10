@@ -40,11 +40,17 @@ use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS,
 
 ## Platform Support
 
-| Platform      | Implementation        | Dependency                |
-|---------------|-----------------------|---------------------------|
-| Android       | Native rive-android   | `app.rive.runtime.kotlin` |
-| iOS           | Swift Package Manager | `rive-ios` via spm4kmp    |
-| Web (JS/Wasm) | NPM package           | `@rive-app/canvas`        |
+| Platform      | Implementation           | Dependency                |
+|---------------|--------------------------|---------------------------|
+| Android       | Native rive-android      | `app.rive.runtime.kotlin` |
+| iOS           | Swift Package Manager    | `rive-ios` via spm4kmp    |
+| Web (JS/Wasm) | NPM package               | `@rive-app/canvas`        |
+| Desktop (JVM) | Custom JNI bridge to rive-runtime (C++) | none (bundled native library) |
+
+**Desktop (JVM) is currently macOS arm64 only.** There is no official Rive SDK for JVM/Desktop,
+so this bridges directly to the C++ [rive-runtime](https://github.com/rive-app/rive-runtime) via
+JNI, rendering through Skia's CPU rasterizer. Linux, Windows, and macOS x64 have the CMake build
+logic in place (`native/rive-desktop/`) but aren't built/verified yet - contributions welcome.
 
 ## Installation
 
@@ -122,6 +128,28 @@ Rive.init(context)
 ```
 
 </details>
+
+## Desktop (JVM) Initialization
+
+Unlike Android (which can auto-initialize via `androidx.startup`) or iOS/JS/Wasm (which need no
+initialization at all), the JVM/Desktop target has no automatic startup hook, so you must
+initialize Rive explicitly once, before the first `CustomRiveAnimation` or `RiveComposition` is
+used - typically at the top of your `main()`:
+
+```kotlin
+import dev.muazkadan.rivecmp.RiveDesktop
+
+fun main() {
+    RiveDesktop.init()
+    application {
+        Window(onCloseRequest = ::exitApplication) {
+            // your Compose Desktop app
+        }
+    }
+}
+```
+
+Safe to call more than once - only the first call does any work.
 
 ## iOS Setup
 

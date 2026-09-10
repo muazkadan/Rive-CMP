@@ -1,0 +1,18 @@
+# Matches the rive-runtime / rive-android code style so ported files stay
+# diffable against upstream. Run: clang-format -i src/**/*.cpp include/**/*.hpp
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++17
+IndentWidth: 4
+ColumnLimit: 80
+UseTab: Never
+BreakBeforeBraces: Allman
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+PointerAlignment: Left
+SpaceAfterTemplateKeyword: true
+SortIncludes: false

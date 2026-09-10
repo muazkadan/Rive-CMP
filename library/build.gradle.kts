@@ -18,6 +18,10 @@ plugins {
 group = "dev.muazkadan"
 version = "0.4.1"
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi")
+    }
+
     androidLibrary {
         namespace = "dev.muazkadan.rivecmp"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -60,6 +64,8 @@ kotlin {
         browser()
     }
 
+    jvm()
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -90,6 +96,11 @@ kotlin {
 
         wasmJsMain.dependencies {
             implementation(npm("@rive-app/canvas", "2.34.1"))
+        }
+
+        jvmMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            runtimeOnly(project(":runtime-macos-arm64"))
         }
     }
 }
