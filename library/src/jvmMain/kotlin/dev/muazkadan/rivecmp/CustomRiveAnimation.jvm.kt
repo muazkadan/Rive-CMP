@@ -24,6 +24,8 @@ import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.skia.Bitmap
+import org.jetbrains.skia.ColorAlphaType
+import org.jetbrains.skia.ColorType
 import org.jetbrains.skia.ImageInfo
 import org.jetbrains.skia.impl.BufferUtil
 
@@ -172,7 +174,13 @@ private class RiveRendererNode(
 
         bitmap?.close()
         bitmap = Bitmap()
-            .apply { allocPixels(ImageInfo.makeN32Premul(size.width, size.height)) }
+            .apply {
+                // The native bridge links its own Skia build, whose kN32_SkColorType
+                // need not match Skiko's N32. Pin both sides to an explicit order.
+                allocPixels(
+                    ImageInfo(size.width, size.height, ColorType.RGBA_8888, ColorAlphaType.PREMUL)
+                )
+            }
             .also { imageBitmap = it.asComposeImageBitmap() }
         bindBuffer()
     }
