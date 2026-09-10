@@ -11,6 +11,9 @@ import androidx.compose.ui.viewinterop.WebElementView
 import dev.muazkadan.rivecmp.core.RiveAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
+import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
+import kotlin.wasm.unsafe.wasmMemory
+import kotlin.wasm.unsafe.withScopedMemoryAllocator
 import kotlinx.browser.document
 import org.w3c.dom.HTMLCanvasElement
 
@@ -106,31 +109,19 @@ actual fun CustomRiveAnimation(
     }
 }
 
+@OptIn(UnsafeWasmMemoryApi::class)
 private fun byteArrayToJsUint8Array(byteArray: ByteArray): JsAny =
-    byteArrayToJsUint8ArrayImpl(byteArray.toJsReference())
-
-private fun byteArrayToJsUint8ArrayImpl(byteArray: JsReference<ByteArray>): JsAny = js(
-    """
-    {
-        const size = wasmExports.riveCmpByteArraySize(byteArray);
-        const bytes = new Uint8Array(size);
-        for (let i = 0; i < size; i++) {
-            bytes[i] = wasmExports.riveCmpByteArrayGet(byteArray, i) & 0xff;
+    withScopedMemoryAllocator { allocator ->
+        val size = byteArray.size
+        val pointer = allocator.allocate(size)
+        for (i in 0 until size) {
+            (pointer + i).storeByte(byteArray[i])
         }
-        return bytes;
+        wasmMemoryToJsUint8Array(wasmMemory, pointer.address.toInt(), size)
     }
-    """
-)
 
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-private fun riveCmpByteArrayGet(byteArray: JsReference<ByteArray>, index: Int): Byte =
-    byteArray.get()[index]
-
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-private fun riveCmpByteArraySize(byteArray: JsReference<ByteArray>): Int =
-    byteArray.get().size
+private fun wasmMemoryToJsUint8Array(memory: JsAny, pointer: Int, size: Int): JsAny =
+    js("new Uint8Array(memory.buffer, pointer, size).slice()")
 
 @OptIn(ExperimentalRiveCmpApi::class)
 @Composable
