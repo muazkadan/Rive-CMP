@@ -53,6 +53,11 @@ target_compile_definitions(rive-desktop PRIVATE
 target_compile_definitions(rive-desktop PRIVATE
         SK_DISABLE_SKPICTURE
         SK_DISABLE_TEXT
+        # Skia's SHARED_EXTRA_CFLAGS in make_skia_macos.sh also sets RIVE_OPTIMIZED.
+        # Omitting it here compiles Skia's headers differently than Skia itself was
+        # compiled, so SkCanvas's layout disagrees and the first SkCanvas::save()
+        # segfaults at runtime.
+        RIVE_OPTIMIZED
         SK_DISABLE_LEGACY_SHADERCONTEXT
         SK_DISABLE_LOWP_RASTER_PIPELINE
         SK_FORCE_RASTER_PIPELINE_BLITTER
