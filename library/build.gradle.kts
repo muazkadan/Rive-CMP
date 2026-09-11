@@ -115,7 +115,7 @@ mavenPublishing {
     pom {
         name = "Rive CMP"
         description =
-            "A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to use rive-android and rive-ios seamlessly across Android and iOS platforms."
+            "A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to use rive-android, rive-ios, @rive-app/canvas, and a JNI bridge to rive-runtime seamlessly across Android, iOS, Web, and Desktop platforms."
         inceptionYear = "2025"
         url = "https://github.com/muazkadan/Rive-CMP"
         licenses {
