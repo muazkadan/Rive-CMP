@@ -58,26 +58,30 @@ be a deliberate, reviewable commit that updates the gitlink and the checksum bel
 ## Provenance of the shipped binary
 
 The prebuilt `runtime-macos-arm64/src/main/resources/librive-desktoparm64.dylib`
-currently in this repository has this fingerprint:
+is produced by the **Build native desktop runtime** workflow
+([`.github/workflows/build-native-desktop.yml`](../../.github/workflows/build-native-desktop.yml))
+from the pinned `rive-runtime` commit above, on a clean macOS arm64 runner:
 
 ```
-sha256  baf660c9323d08239e464278cbcec2ffa4bc5129658473a5f8477f3bb5a2aab3
-size    9191704 bytes
+sha256  1d6bcd505f64f4b733755484f6c5f69a8171a3589dfd7e2a1e91297f8f149409
+size    9539800 bytes
+built   GitHub Actions run 34628260905
 ```
 
-> [!WARNING]
-> **This binary predates the pin above and is not reproducible from this repository.**
-> It was built before the exact `rive-runtime` commit was recorded, so rebuilding from
-> the pinned commit may produce a binary that behaves slightly differently. The
-> checksum here identifies *what we currently ship*, not that it matches this source.
->
-> To close this gap, run the **Build native desktop runtime** workflow
-> (`.github/workflows/build-native-desktop.yml`), which builds the dylib from the
-> pinned commit on a clean macOS arm64 runner and runs the JNI smoke test against it.
-> Replace the committed binary with that artifact and update the checksum above; the
-> warning can then be removed.
+The binary this replaced was built before the pin was recorded and could not be
+reproduced from this repository. A rebuild from the pin initially segfaulted at
+`SkCanvas::save()` on first render: the pinned runtime's `make_skia_macos.sh` adds
+`-flto=full`, `-fembed-bitcode` and `-DRIVE_OPTIMIZED` to `SHARED_EXTRA_CFLAGS`,
+which the original build never used. `-flto=full` leaves LLVM bitcode in Skia's
+archives while this bridge is compiled without LTO. The workflow now strips those
+three flags before building; see
+[#160](https://github.com/muazkadan/Rive-CMP/issues/160) for the full history.
 
-Whenever the binary is replaced, update the checksum in this file in the same commit.
+Whenever the binary is replaced, update the checksum in this file in the same
+commit, and verify the result by **running the desktop sample** — the JNI smoke
+test passes on a binary that crashes on first render, so it does not distinguish
+a good build from a bad one.
+
 Verify a copy with:
 
 ```sh
