@@ -3,15 +3,16 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
 }
 
-group = "dev.muazkadan"
-version = "0.4.0"
+group = providers.gradleProperty("GROUP").get()
+version = providers.gradleProperty("VERSION_NAME").get()
 
 mavenPublishing {
     publishToMavenCentral()
 
     signAllPublications()
 
-    coordinates(group.toString(), "rive-cmp-runtime-macos-arm64", version.toString())
+    // groupId and version come from GROUP / VERSION_NAME in gradle.properties
+    coordinates(artifactId = "rive-cmp-runtime-macos-arm64")
 
     pom {
         name = "Rive CMP Desktop Runtime (macOS arm64)"

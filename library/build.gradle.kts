@@ -15,8 +15,8 @@ plugins {
     alias(libs.plugins.dokka)
 }
 
-group = "dev.muazkadan"
-version = "0.4.1"
+group = providers.gradleProperty("GROUP").get()
+version = providers.gradleProperty("VERSION_NAME").get()
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi")
@@ -110,7 +110,8 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(group.toString(), "rive-cmp", version.toString())
+    // groupId and version come from GROUP / VERSION_NAME in gradle.properties
+        coordinates(artifactId = "rive-cmp")
 
     pom {
         name = "Rive CMP"
