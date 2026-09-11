@@ -19,6 +19,13 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
 add_library(rive-desktop SHARED ${SOURCES})
 
 # List of static libraries
+# These must match what the premake invocation below emits into
+# out/<arch>_<config>. rive_pls_renderer is required even though this bridge
+# renders through Skia's CPU rasterizer: with WITH_SCRIPTING=ON, librive.a's
+# Luau shader bindings reference rive::gpu::RenderContext and RiveRenderer.
+# librive_cpp_runtime.a is deliberately not listed - it is an aggregate archive
+# whose members are these .a files, which ld rejects ("librive.a not a mach-o
+# file"). Link the components instead.
 set(static_libs
         rive
         rive_harfbuzz
@@ -46,6 +53,11 @@ target_compile_definitions(rive-desktop PRIVATE
 target_compile_definitions(rive-desktop PRIVATE
         SK_DISABLE_SKPICTURE
         SK_DISABLE_TEXT
+        # Skia's SHARED_EXTRA_CFLAGS in make_skia_macos.sh also sets RIVE_OPTIMIZED.
+        # Omitting it here compiles Skia's headers differently than Skia itself was
+        # compiled, so SkCanvas's layout disagrees and the first SkCanvas::save()
+        # segfaults at runtime.
+        RIVE_OPTIMIZED
         SK_DISABLE_LEGACY_SHADERCONTEXT
         SK_DISABLE_LOWP_RASTER_PIPELINE
         SK_FORCE_RASTER_PIPELINE_BLITTER
@@ -53,8 +65,10 @@ target_compile_definitions(rive-desktop PRIVATE
         SK_DISABLE_EFFECT_DESERIALIZATION)
 
 # Configure for monorepo vs. rive-desktop repo
-if (EXISTS "${PROJECT_SOURCE_DIR}/../submodules/rive-runtime")
-    set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/..")
+if (EXISTS "${PROJECT_SOURCE_DIR}/../../submodules/rive-runtime")
+    # PROJECT_SOURCE_DIR is native/rive-desktop, so the repo root - which is where
+    # submodules/rive-runtime lives - is two levels up, not one.
+    set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/../..")
     set(RIVE_RUNTIME_DIR "${PACKAGES_DIR}/submodules/rive-runtime")
 else ()
     set(PACKAGES_DIR "${PROJECT_SOURCE_DIR}/../../../../..")
@@ -142,7 +156,7 @@ set_target_properties(rive-desktop PROPERTIES
 
 # Build the Rive C++ runtime and its dependencies as static .a libs
 execute_process(
-        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} -- rive_cpp_runtime
+        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} -- rive_cpp_runtime rive_pls_renderer
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         RESULT_VARIABLE SCRIPT_RESULT
         OUTPUT_VARIABLE SCRIPT_OUTPUT

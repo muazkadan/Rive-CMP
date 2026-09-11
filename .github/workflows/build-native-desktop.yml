@@ -19,8 +19,11 @@ on:
 
 jobs:
   build:
-    # macOS 15 runners are arm64, matching the shipped librive-desktoparm64.dylib.
-    runs-on: macos-15
+    # macOS 14 runners are arm64 (matching the shipped librive-desktoparm64.dylib)
+    # and ship an older Xcode/SDK. The Skia checkout pinned by rive-runtime vendors
+    # a zlib whose `#define fdopen(fd,mode) NULL` breaks against the macOS 15.5 SDK's
+    # own fdopen declaration, so the newer image cannot build it.
+    runs-on: macos-14
     timeout-minutes: 120
 
     steps:
@@ -37,15 +40,39 @@ jobs:
           distribution: temurin
           java-version: 24
 
+      - name: Report the active toolchain
+        run: |
+          echo "Available Xcode versions:"
+          ls -d /Applications/Xcode*.app 2>/dev/null || true
+          xcodebuild -version || true
+          xcrun --show-sdk-version || true
+
       - name: Install native build tools
         run: brew install ninja premake
 
       - name: Build Skia for arm64
         working-directory: submodules/rive-runtime/skia/dependencies
-        run: ./make_skia_macos.sh arm64
+        run: |
+          # make_skia_macos.sh finishes by uploading its build cache to Rive's own
+          # S3 bucket (s3://2d-public/archives), which we have no credentials for.
+          # That upload exits non-zero and would fail the step even though the
+          # build succeeded, so ignore the script's status and assert on the
+          # artifact CMakeLists.txt actually links against instead.
+          ./make_skia_macos.sh arm64 || echo "make_skia_macos.sh exited non-zero (expected: S3 cache upload)"
+          test -f skia/out/macosx/arm64/libskia.a
+          ls -lh skia/out/macosx/arm64/libskia.a
 
       - name: Configure
         run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
+
+      - name: Locate the static libs Premake produced
+        run: |
+          # CMake links against native/rive-desktop/out/<arch>_<config>/lib*.a.
+          # Show where build_rive.sh actually wrote them so a path mismatch is
+          # diagnosable from the log rather than by guesswork.
+          find submodules/rive-runtime native/rive-desktop -name 'librive*.a' 2>/dev/null | head -40 || true
+          echo "--- expected by CMake ---"
+          ls -la native/rive-desktop/out/arm64_release/ 2>/dev/null || echo "(missing)"
 
       - name: Build
         run: cmake --build native/rive-desktop/build
