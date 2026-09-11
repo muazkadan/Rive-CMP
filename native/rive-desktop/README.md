@@ -21,6 +21,19 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
+Requires `ninja` and `premake` (`brew install ninja premake`).
+
+Two known snags on recent macOS:
+
+- `make_skia_macos.sh` invokes `python`, which no longer exists on macOS 26 (only `python3`). Put a
+  `python` shim on `PATH` that execs `python3` - a symlink does not work, because `/usr/bin/python3`
+  resolves the tool from `argv[0]`.
+- The Skia this pins is from 2022 and its vendored zlib and libpng take Classic Mac OS code paths
+  under `TARGET_OS_MAC`, so they fail against modern SDKs (`fdopen` redefinition, missing `fp.h`).
+  It builds against the macOS 14.5 SDK; the
+  [Build native desktop runtime](../../.github/workflows/build-native-desktop.yml) workflow uses
+  `macos-14` for this reason.
+
 Produces `build/librive-desktop<arch>.<ext>` for the host OS/arch.
 
 ## Scope

@@ -47,6 +47,12 @@ use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS,
 | Web (JS/Wasm) | NPM package               | `@rive-app/canvas`        |
 | Desktop (JVM) | Custom JNI bridge to rive-runtime (C++) | none (bundled native library) |
 
+> [!IMPORTANT]
+> **The iOS simulator on Intel Macs is not supported as of 0.4.1.** Compose Multiplatform stopped
+> publishing an `iosX64` variant in 1.11, so that target can no longer be built. `iosArm64` (devices)
+> and `iosSimulatorArm64` (Apple Silicon simulators) are unaffected. Stay on `0.4.0` if you need
+> the Intel simulator.
+
 **Desktop (JVM) is currently macOS arm64 only.** There is no official Rive SDK for JVM/Desktop,
 so this bridges directly to the C++ [rive-runtime](https://github.com/rive-app/rive-runtime) via
 JNI, rendering through Skia's CPU rasterizer. Linux, Windows, and macOS x64 have the CMake build
@@ -60,7 +66,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 commonMain.dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.4.0")
+    implementation("dev.muazkadan:rive-cmp:0.4.1")
 }
 ```
 
@@ -68,7 +74,7 @@ commonMain.dependencies {
 
 ```kotlin
 dependencies {
-    implementation("dev.muazkadan:rive-cmp:0.4.0")
+    implementation("dev.muazkadan:rive-cmp:0.4.1")
 }
 ```
 
@@ -78,7 +84,7 @@ Add to your `libs.versions.toml`:
 
 ```toml
 [versions]
-rive-cmp = "0.4.0"
+rive-cmp = "0.4.1"
 
 [libraries]
 rive-cmp = { module = "dev.muazkadan:rive-cmp", version.ref = "rive-cmp" }
@@ -317,30 +323,45 @@ fun rememberRiveComposition(
 ### Android
 
 - Minimum SDK: 24
-- Compile/Target SDK: 36
-- Kotlin: 2.0+
-- Compose Multiplatform: 1.10+
-- AGP: 9.0+ (Gradle 9.1+)
+- Compile/Target SDK: 37
+- Kotlin: 2.4+
+- Compose Multiplatform: 1.12+
+- AGP: 9.3.2+ (Gradle 9.7+)
+
+> Kotlin 2.4+ is a hard floor, not a recommendation: the published artifacts are built with
+> Kotlin 2.4.20, and consumers on 2.3.x will hit Kotlin metadata incompatibilities.
 
 ### iOS
 
 - Minimum iOS: 14.0
 - Xcode: 15+
 - Swift: 5.9+
+- Apple Silicon required for simulator builds (see the `iosX64` note above)
 
-### Web (JS)
+### Web (JS/Wasm)
 
-- Compose Multiplatform: 1.9.0+
+- Compose Multiplatform: 1.12+
 - Kotlin/JS with IR compiler
 - Browser environment
 
+### Desktop (JVM)
+
+- macOS arm64 only
+- JDK 11+
+
 ## Building
 
-The project has three modules:
+The project has four Gradle modules:
 
-- **`library`** – The Rive CMP library (KMP with Android, iOS, JS)
-- **`sample`** – Shared sample UI and logic (KMP library; used by Android and iOS)
+- **`library`** – The Rive CMP library (KMP: Android, iOS, JS, Wasm, JVM/Desktop)
+- **`sample`** – Shared sample UI and logic (KMP library; also the Desktop, JS and Wasm entry point)
 - **`androidSample`** – Android app entry point (run this for the Android sample)
+- **`runtime-macos-arm64`** – Ships the prebuilt `librive-desktoparm64.dylib` for JVM/Desktop
+
+plus **`native/rive-desktop/`**, a CMake project for the JNI bridge. It is *not* part of the default
+Gradle build - `:library:jvmMain` consumes the prebuilt binary instead. See
+[`native/rive-desktop/README.md`](native/rive-desktop/README.md) for how to build it, the pinned
+`rive-runtime` commit, and the provenance of the shipped binary.
 
 The library uses Kotlin Multiplatform with the following plugins:
 
@@ -351,18 +372,31 @@ The library uses Kotlin Multiplatform with the following plugins:
 - `spmForKmp` (for iOS Swift Package Manager integration)
 
 ```bash
-# Build all targets
-./gradlew build
+# Build and run the Android sample app
+./gradlew :androidSample:installDebug
+
+# Run the Desktop (JVM) sample
+./gradlew :sample:run
+
+# Run the Wasm sample in a browser (http://localhost:8080)
+./gradlew :sample:wasmJsBrowserDevelopmentRun
+
+# Run the JS sample in a browser (http://localhost:8080)
+./gradlew :sample:jsBrowserDevelopmentRun
 
 # Build Android AAR
 ./gradlew :library:assembleRelease
 
-# Build and run the Android sample app
-./gradlew :androidSample:installDebug
-
 # Build iOS Framework
 ./gradlew :library:linkReleaseFrameworkIosArm64
 ```
+
+> [!NOTE]
+> `./gradlew build` currently fails on `checkComposeUiTestConfigurationForJs` /
+> `...ForWasmJs`, a Compose Multiplatform 1.12 check
+> ([CMP-4906](https://youtrack.jetbrains.com/issue/CMP-4906)) whose suggested fix conflicts with the
+> `binaries.library()` output this project publishes. Assembling, publishing and running the
+> samples are unaffected - use the per-target tasks above.
 
 To run the sample in Android Studio, use the **androidSample** run configuration (not `sample`).
 
@@ -380,6 +414,14 @@ To run the sample in Android Studio, use the **androidSample** run configuration
 2. Open in Android Studio or IntelliJ IDEA
 3. Sync Gradle dependencies
 4. For iOS development, ensure Xcode is installed
+5. Only if you intend to build the native desktop bridge, fetch the pinned Rive runtime:
+
+   ```bash
+   git submodule update --init --recursive submodules/rive-runtime
+   ```
+
+   This is not needed for normal development - the JVM target uses the prebuilt binary in
+   `runtime-macos-arm64`. The checkout and its Skia build are large (several GB).
 
 ## License
 
