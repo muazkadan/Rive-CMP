@@ -50,6 +50,23 @@ jobs:
       - name: Install native build tools
         run: brew install ninja premake
 
+      - name: Match the Skia flags the shipped binary was built with
+        working-directory: submodules/rive-runtime/skia/dependencies
+        run: |
+          # The pinned rive-runtime's make_skia_macos.sh adds three flags to
+          # SHARED_EXTRA_CFLAGS that the working prebuilt dylib was never built
+          # with (args.gn supplied in #160): -fembed-bitcode, -flto=full and
+          # -DRIVE_OPTIMIZED. LTO in particular leaves LLVM bitcode in Skia's
+          # archives while the bridge is compiled without it, which is the leading
+          # suspect for the SkCanvas::save() segfault in the CI-built binary.
+          # The script escapes its quotes (\"-flto=full\"), so the pattern must too.
+          sed -i.bak -E '/\\"-fembed-bitcode\\"|\\"-flto=full\\"|\\"-DRIVE_OPTIMIZED\\"/d' make_skia_macos.sh
+          if grep -qE '\\"-flto=full\\"' make_skia_macos.sh; then
+            echo "::error::flag patch did not apply"; exit 1
+          fi
+          echo "--- SHARED_EXTRA_CFLAGS after patch ---"
+          sed -n '/SHARED_EXTRA_CFLAGS=/,/^    "$/p' make_skia_macos.sh
+
       - name: Build Skia for arm64
         working-directory: submodules/rive-runtime/skia/dependencies
         run: |
@@ -61,6 +78,8 @@ jobs:
           ./make_skia_macos.sh arm64 || echo "make_skia_macos.sh exited non-zero (expected: S3 cache upload)"
           test -f skia/out/macosx/arm64/libskia.a
           ls -lh skia/out/macosx/arm64/libskia.a
+          echo "--- gn args actually used ---"
+          cat skia/out/macosx/arm64/args.gn
 
       - name: Configure
         run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
