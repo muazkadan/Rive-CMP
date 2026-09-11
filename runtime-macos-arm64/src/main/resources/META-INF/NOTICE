@@ -1,0 +1,68 @@
+Rive CMP Desktop Runtime (macOS arm64)
+Copyright 2025 Muaz KADAN
+
+This artifact is licensed under the Apache License, Version 2.0.
+
+It contains a prebuilt native library, librive-desktoparm64.dylib, which
+statically links the third-party components listed below. Those components are
+licensed under their own terms, not under the Apache License, and the notices
+below are provided to satisfy their attribution requirements.
+
+The complete license text and copyright notices for each component are
+available at the referenced sources.
+
+--------------------------------------------------------------------------------
+rive-runtime
+    https://github.com/rive-app/rive-runtime
+    MIT License
+    Pinned commit: 073942e9261faa2f886fea733505751a131b6a1f
+
+Skia (Rive fork)
+    https://github.com/rive-app/skia  (branch: rive)
+    BSD 3-Clause License
+    Copyright (c) 2011 Google Inc. All rights reserved.
+
+HarfBuzz
+    https://github.com/harfbuzz/harfbuzz
+    "Old MIT" License
+    Vendored by rive-runtime as rive_harfbuzz.
+
+SheenBidi
+    https://github.com/Tehreer/SheenBidi
+    Apache License, Version 2.0
+    Vendored by rive-runtime as rive_sheenbidi.
+
+Yoga
+    https://github.com/facebook/yoga
+    MIT License
+    Vendored by rive-runtime as rive_yoga.
+
+Luau
+    https://github.com/luau-lang/luau
+    MIT License
+    Linked when Rive scripting support is enabled (the default).
+
+miniaudio
+    https://github.com/mackron/miniaudio
+    Dual licensed: MIT No Attribution, or public domain (Unlicense)
+    Linked when Rive audio support is enabled (the default).
+
+--------------------------------------------------------------------------------
+The following are vendored by Skia and are therefore also present in the
+compiled library:
+
+zlib
+    https://github.com/madler/zlib
+    zlib License
+
+libpng
+    https://github.com/pnggroup/libpng
+    PNG Reference Library License
+
+libjpeg-turbo
+    https://github.com/libjpeg-turbo/libjpeg-turbo
+    BSD 3-Clause License and the IJG (Independent JPEG Group) License
+--------------------------------------------------------------------------------
+
+See native/rive-desktop/README.md in the Rive CMP repository for how this
+binary is built and for the provenance of the copy currently shipped.
