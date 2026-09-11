@@ -165,6 +165,8 @@ private class RiveRendererNode(
 
     var overlay: Boolean = overlay
 
+    private val TRANSPARENT = 0
+
     private var bitmap: Bitmap? = null
     private var imageBitmap: ImageBitmap? = null
 
@@ -202,6 +204,10 @@ private class RiveRendererNode(
             while (isActive) {
                 withFrameMillis { frameTime ->
                     if (controller.artboardRenderer.isPlaying) {
+                        // Rive draws only the artboard's shapes into the bitmap and never
+                        // clears it, so anything transparent in this frame would otherwise
+                        // keep showing the previous frame's pixels.
+                        bitmap?.erase(TRANSPARENT)
                         controller.artboardRenderer.doFrame((frameTime - lastFrameTime) / 1_000f)
                         bitmap?.notifyPixelsChanged()
                         invalidateDraw()
