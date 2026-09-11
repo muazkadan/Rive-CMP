@@ -7,9 +7,11 @@
 <img alt="Platform Android" src="https://img.shields.io/badge/Platform-Android-brightgreen"/>
 <img alt="Platform iOS" src="https://img.shields.io/badge/Platform-iOS-lightgray"/>
 <img alt="Platform Web" src="https://img.shields.io/badge/Platform-Web%20(JS%2FWasm)-orange"/>
+<img alt="Platform Desktop" src="https://img.shields.io/badge/Platform-Desktop%20(JVM)-blueviolet"/>
 
 A Compose Multiplatform wrapper library for integrating Rive animations, providing a unified API to
-use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS, and Web platforms.
+use rive-android, rive-ios, @rive-app/canvas, and a JNI bridge to rive-runtime seamlessly across
+Android, iOS, Web, and Desktop platforms.
 
 <img src="images/banner.png" alt="Rive CMP Banner"></img>
 
@@ -29,12 +31,12 @@ use rive-android, rive-ios, and @rive-app/canvas seamlessly across Android, iOS,
 
 ## Features
 
-- **Unified API**: Single `CustomRiveAnimation` composable that works across Android, iOS and Web
+- **Unified API**: Single `CustomRiveAnimation` composable that works across Android, iOS, Web and Desktop
 - **Multiple Loading Options**: Load animations from URLs, ByteArrays, or pre-composed
   specifications
 - **Native Performance**: Uses platform-specific Rive implementations for optimal performance
 - **Easy Integration**: Simple Compose-style API with familiar modifier patterns
-- **State Machine Support**: Support for Rive state machines on both platforms
+- **State Machine Support**: Support for Rive state machines on every supported platform
 - **Flexible Configuration**: Customizable alignment, fit, artboard selection, and playback options
 - **Memory Efficient**: Value classes and immutable specifications for optimal performance
 
@@ -455,4 +457,5 @@ limitations under the License.
 - [rive-android](https://github.com/rive-app/rive-android) for Android implementation
 - [rive-ios](https://github.com/rive-app/rive-ios) for iOS implementation
 - [@rive-app/canvas](https://www.npmjs.com/package/@rive-app/canvas) for Web implementation
+- [rive-runtime](https://github.com/rive-app/rive-runtime) for the C++ runtime behind Desktop (JVM)
 - [spm4kmp](https://github.com/frankois944/spm4kmp) for Swift Package Manager integration
