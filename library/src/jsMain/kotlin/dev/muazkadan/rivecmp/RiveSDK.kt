@@ -7,7 +7,7 @@ external object RiveSDK {
         fun play()
         fun pause()
         fun stop()
-        fun stateMachineInputs(name: String): Array<dynamic>
+        fun stateMachineInputs(name: String): Array<dynamic>?
         fun cleanup()
         fun resizeToCanvas()
         fun resizeDrawingSurfaceToCanvas()
