@@ -10,6 +10,7 @@ rive-android = "11.12.0"
 androidx-startup = "1.2.0"
 spmForKmp = "1.9.5"
 rive-ios = "6.27.0"
+rive-canvas = "2.42.2"
 dokka = "2.2.0"
 
 [libraries]

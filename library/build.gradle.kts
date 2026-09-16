@@ -91,11 +91,11 @@ kotlin {
         }
 
         jsMain.dependencies {
-            implementation(npm("@rive-app/canvas", "2.42.2"))
+            implementation(npm("@rive-app/canvas", libs.versions.rive.canvas.get()))
         }
 
         wasmJsMain.dependencies {
-            implementation(npm("@rive-app/canvas", "2.42.2"))
+            implementation(npm("@rive-app/canvas", libs.versions.rive.canvas.get()))
         }
 
         jvmMain.dependencies {
