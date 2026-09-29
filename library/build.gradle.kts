@@ -102,6 +102,10 @@ kotlin {
             implementation(compose.desktop.currentOs)
             runtimeOnly(project(":runtime-macos-arm64"))
         }
+
+        jvmTest.dependencies {
+            implementation(libs.compose.ui.test)
+        }
     }
 }
 

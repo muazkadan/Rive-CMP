@@ -87,7 +87,9 @@ actual fun CustomRiveAnimation(
     // `composition: RiveComposition?` overload above, where the caller manages the composition's
     // lifecycle - it's responsible for releasing its native File when done with it.
     DisposableEffect(composition) {
-        onDispose { composition?.file?.release() }
+        // Captured so this effect releases the File it was keyed on, not the one loaded after it
+        val file = composition?.file
+        onDispose { file?.release() }
     }
 
     CustomRiveAnimation(
@@ -117,7 +119,9 @@ actual fun CustomRiveAnimation(
     val composition by rememberRiveComposition(byteArray) { RiveCompositionSpec.byteArray(byteArray) }
 
     DisposableEffect(composition) {
-        onDispose { composition?.file?.release() }
+        // Captured so this effect releases the File it was keyed on, not the one loaded after it
+        val file = composition?.file
+        onDispose { file?.release() }
     }
 
     CustomRiveAnimation(
