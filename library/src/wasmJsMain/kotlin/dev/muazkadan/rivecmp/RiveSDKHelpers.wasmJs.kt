@@ -6,7 +6,7 @@ fun emptyRiveLayoutOptions(): RiveLayoutOptions = js("({})")
 
 fun emptyRiveOptions(): RiveOptions = js("({})")
 
-fun emptyResetOptions(): JsAny = js("({})")
+fun resetOptions(autoBind: Boolean): JsAny = js("({ autoBind: autoBind })")
 
 fun createRiveLayout(options: RiveLayoutOptions): RiveLayout = RiveLayout(options)
 

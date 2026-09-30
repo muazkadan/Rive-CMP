@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -26,6 +27,7 @@ import dev.muazkadan.rivecmp.core.RiveFit
 import dev.muazkadan.rivecmp.core.toJvmAlignment
 import dev.muazkadan.rivecmp.core.toJvmFit
 import dev.muazkadan.rivecmp.native.RiveFileController
+import dev.muazkadan.rivecmp.native.ViewModelInstance
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -46,13 +48,18 @@ actual fun CustomRiveAnimation(
     fit: RiveFit,
     stateMachineName: String?,
     overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     if (composition == null) return
 
+    val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+    val autoBind = onViewModelInstance != null
+
     val controller =
-        remember(composition, alignment, autoPlay, artboardName, fit, stateMachineName) {
+        remember(composition, alignment, autoPlay, artboardName, fit, stateMachineName, autoBind) {
             RiveFileController(
                 autoplay = autoPlay,
+                autoBind = autoBind,
                 stateMachineName = stateMachineName,
                 file = composition.file,
                 artboard = artboardName?.let(composition.file::artboard)
@@ -72,6 +79,19 @@ actual fun CustomRiveAnimation(
         }
     }
 
+    DisposableEffect(controller) {
+        val deliver = { instance: ViewModelInstance ->
+            currentOnViewModelInstance?.invoke(
+                DesktopRiveViewModelInstance(instance, controller::resumeStateMachines),
+            )
+            Unit
+        }
+        controller.viewModelInstance?.let(deliver)
+        // Resetting the composition instances the artboard again and binds a fresh instance.
+        controller.onViewModelInstanceBound = deliver
+        onDispose { controller.onViewModelInstanceBound = null }
+    }
+
     Spacer(modifier.then(RiveRendererElement(controller, overlay)))
 }
 
@@ -86,6 +106,7 @@ actual fun CustomRiveAnimation(
     fit: RiveFit,
     stateMachineName: String?,
     overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition by rememberRiveComposition(url) { RiveCompositionSpec.url(url) }
 
@@ -107,6 +128,7 @@ actual fun CustomRiveAnimation(
         fit = fit,
         stateMachineName = stateMachineName,
         overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }
 
@@ -121,6 +143,7 @@ actual fun CustomRiveAnimation(
     fit: RiveFit,
     stateMachineName: String?,
     overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition by rememberRiveComposition(byteArray) { RiveCompositionSpec.byteArray(byteArray) }
 
@@ -139,6 +162,7 @@ actual fun CustomRiveAnimation(
         fit = fit,
         stateMachineName = stateMachineName,
         overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }
 

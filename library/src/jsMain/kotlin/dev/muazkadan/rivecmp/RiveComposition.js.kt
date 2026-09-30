@@ -9,6 +9,12 @@ actual class RiveComposition internal actual constructor(
     internal actual val spec: RiveCompositionSpec = spec
     private var riveInstance: RiveSDK.Rive? = null
 
+    /** Whether [reset] binds a view model instance again, as the view was created to do. */
+    internal var autoBind: Boolean = false
+
+    /** Runs after [reset], which replaces the bound view model instance. */
+    internal var afterReset: (() -> Unit)? = null
+
     actual fun setNumberInput(stateMachineName: String, name: String, value: Float) {
         val inputs = riveInstance?.stateMachineInputs(stateMachineName)
         if (inputs != null) {
@@ -47,7 +53,10 @@ actual class RiveComposition internal actual constructor(
         // Rive Web SDK reset() takes an options object (RiveResetParameters)
         // Pass empty object to reset everything to initial state without forcing autoplay
         // This matches the behavior of Android and iOS implementations which preserve the original autoplay state
-        riveInstance?.reset(js("{}"))
+        val params = js("{}")
+        params.autoBind = autoBind
+        riveInstance?.reset(params)
+        afterReset?.invoke()
     }
 
     actual fun stop() {

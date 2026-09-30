@@ -63,6 +63,8 @@ public class File(
         artboardPointer: Long,
     ): Long
 
+    private external fun cppViewModelByName(cppPointer: Long, name: String): Long
+
     external override fun cppDelete(pointer: Long)
 
     /** Get the first (i.e. the default) artboard in the file. */
@@ -130,6 +132,19 @@ public class File(
         if (vmPointer == NULL_POINTER)
             throw ViewModelException("No default ViewModel found for artboard ${artboard.name}.")
 
+        return ViewModel(vmPointer).also { dependencies.add(it) }
+    }
+
+    /**
+     * Get the [ViewModel] called [name] in the file.
+     *
+     * @throws ViewModelException If no ViewModel has that name.
+     */
+    @Throws(ViewModelException::class)
+    public fun getViewModelByName(name: String): ViewModel {
+        val vmPointer = cppViewModelByName(cppPointer, name)
+        if (vmPointer == NULL_POINTER)
+            throw ViewModelException("ViewModel \"$name\" not found.")
         return ViewModel(vmPointer).also { dependencies.add(it) }
     }
 

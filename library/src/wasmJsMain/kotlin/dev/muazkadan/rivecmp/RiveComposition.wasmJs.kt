@@ -11,6 +11,12 @@ actual class RiveComposition internal actual constructor(
     internal actual val spec: RiveCompositionSpec = spec
     private var riveInstance: Rive? = null
 
+    /** Whether [reset] binds a view model instance again, as the view was created to do. */
+    internal var autoBind: Boolean = false
+
+    /** Runs after [reset], which replaces the bound view model instance. */
+    internal var afterReset: (() -> Unit)? = null
+
     actual fun setNumberInput(stateMachineName: String, name: String, value: Float) {
         setNumberInputValue(riveInstance, stateMachineName, name, value)
     }
@@ -28,7 +34,8 @@ actual class RiveComposition internal actual constructor(
     }
 
     actual fun reset() {
-        riveInstance?.reset(emptyResetOptions())
+        riveInstance?.reset(resetOptions(autoBind))
+        afterReset?.invoke()
     }
 
     actual fun stop() {

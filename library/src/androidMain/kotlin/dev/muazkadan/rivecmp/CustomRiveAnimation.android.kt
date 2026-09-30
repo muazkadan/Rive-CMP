@@ -1,6 +1,10 @@
 package dev.muazkadan.rivecmp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import app.rive.runtime.kotlin.RiveAnimationView
@@ -20,9 +24,13 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     if (composition != null) {
+        var riveView by remember { mutableStateOf<RiveAnimationView?>(null) }
+        BindViewModelInstance(riveView, composition, onViewModelInstance)
+
         when (val spec = composition.spec) {
             is RiveUrlCompositionSpec -> {
                 AndroidView(
@@ -33,6 +41,7 @@ actual fun CustomRiveAnimation(
                             .setAlignment(alignment.toAndroidAlignment())
                             .setFit(fit.toAndroidFit())
                             .setAutoplay(autoPlay)
+                            .setAutoBind(onViewModelInstance != null)
 
                         // Set artboard name if provided
                         artboardName?.let {
@@ -44,7 +53,7 @@ actual fun CustomRiveAnimation(
                             builder.setStateMachineName(it)
                         }
 
-                        builder.build()
+                        builder.build().also { riveView = it }
                     },
                     update = { view ->
                         composition.connectToAnimationView(view)
@@ -60,6 +69,7 @@ actual fun CustomRiveAnimation(
                             .setAlignment(alignment.toAndroidAlignment())
                             .setFit(fit.toAndroidFit())
                             .setAutoplay(autoPlay)
+                            .setAutoBind(onViewModelInstance != null)
 
                         // Set artboard name if provided
                         artboardName?.let {
@@ -71,7 +81,7 @@ actual fun CustomRiveAnimation(
                             builder.setStateMachineName(it)
                         }
 
-                        builder.build()
+                        builder.build().also { riveView = it }
                     },
                     update = { view ->
                         composition.connectToAnimationView(view)
@@ -92,8 +102,12 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
+    var riveView by remember { mutableStateOf<RiveAnimationView?>(null) }
+    BindViewModelInstance(riveView, null, onViewModelInstance)
+
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -102,6 +116,7 @@ actual fun CustomRiveAnimation(
                 .setAlignment(alignment.toAndroidAlignment())
                 .setFit(fit.toAndroidFit())
                 .setAutoplay(autoPlay)
+                .setAutoBind(onViewModelInstance != null)
 
             // Set artboard name if provided
             artboardName?.let {
@@ -113,7 +128,7 @@ actual fun CustomRiveAnimation(
                 builder.setStateMachineName(it)
             }
 
-            builder.build()
+            builder.build().also { riveView = it }
         }
     )
 }
@@ -128,8 +143,11 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
+    var riveView by remember { mutableStateOf<RiveAnimationView?>(null) }
+    BindViewModelInstance(riveView, null, onViewModelInstance)
 
     AndroidView(
         modifier = modifier,
@@ -139,6 +157,7 @@ actual fun CustomRiveAnimation(
                 .setAlignment(alignment.toAndroidAlignment())
                 .setFit(fit.toAndroidFit())
                 .setAutoplay(autoPlay)
+                .setAutoBind(onViewModelInstance != null)
 
             // Set artboard name if provided
             artboardName?.let {
@@ -150,7 +169,7 @@ actual fun CustomRiveAnimation(
                 builder.setStateMachineName(it)
             }
 
-            builder.build()
+            builder.build().also { riveView = it }
         }
     )
 }
