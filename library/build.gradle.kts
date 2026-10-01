@@ -71,6 +71,8 @@ kotlin {
         }
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+            // Compile against the JDK 11 API too, so newer JDK APIs fail the build instead of at runtime
+            freeCompilerArgs.add("-Xjdk-release=11")
         }
     }
 
