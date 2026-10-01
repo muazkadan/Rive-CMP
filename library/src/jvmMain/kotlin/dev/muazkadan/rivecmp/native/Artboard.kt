@@ -17,6 +17,8 @@ public class Artboard(
 ) : NativeObject(unsafeCppPointer) {
 
     private external fun cppName(cppPointer: Long): String
+    private external fun cppWidth(cppPointer: Long): Float
+    private external fun cppHeight(cppPointer: Long): Float
 
     private external fun cppAnimationByName(cppPointer: Long, name: String): Long
     private external fun cppAnimationCount(cppPointer: Long): Int
@@ -45,6 +47,14 @@ public class Artboard(
     /** Get the [name] of the Artboard. */
     public val name: String
         get() = cppName(cppPointer)
+
+    /** The artboard's width in artboard units, as designed in the Rive editor. */
+    public val width: Float
+        get() = cppWidth(cppPointer)
+
+    /** The artboard's height in artboard units, as designed in the Rive editor. */
+    public val height: Float
+        get() = cppHeight(cppPointer)
 
     /**
      * Get the animation with a given [name] in the [Artboard].

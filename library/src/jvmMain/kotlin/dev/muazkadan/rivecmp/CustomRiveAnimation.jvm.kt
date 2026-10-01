@@ -10,10 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.LayoutAwareModifierNode
+import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.invalidateDraw
+import androidx.compose.ui.node.invalidateMeasurement
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import dev.muazkadan.rivecmp.core.RiveAlignment
 import dev.muazkadan.rivecmp.core.RiveFit
@@ -150,7 +156,8 @@ private data class RiveRendererElement(
 }
 
 /**
- * Draws a [RiveFileController]'s artboard, advancing it on every UI frame.
+ * Draws a [RiveFileController]'s artboard, advancing it on every UI frame, and sizes the view to
+ * the artboard as [measureArtboard] describes.
  *
  * The native renderer writes directly into the [Bitmap]'s pixel memory, so a
  * frame costs no pixel copies: advance, [Bitmap.notifyPixelsChanged], [invalidateDraw].
@@ -158,12 +165,13 @@ private data class RiveRendererElement(
 private class RiveRendererNode(
     controller: RiveFileController,
     overlay: Boolean,
-) : Modifier.Node(), DrawModifierNode, LayoutAwareModifierNode {
+) : Modifier.Node(), DrawModifierNode, LayoutAwareModifierNode, LayoutModifierNode {
 
     var controller: RiveFileController = controller
         set(value) {
             if (field === value) return
             field = value
+            invalidateMeasurement()
             bindBuffer()
         }
 
@@ -173,6 +181,18 @@ private class RiveRendererNode(
 
     private var bitmap: Bitmap? = null
     private var imageBitmap: ImageBitmap? = null
+
+    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
+        val artboard = controller.artboard
+        val size = measureArtboard(
+            constraints = constraints,
+            artboard = ArtboardSize(artboard.width, artboard.height),
+            fit = controller.fit,
+            scaleFactor = controller.layoutScaleFactorActive,
+        )
+        val placeable = measurable.measure(Constraints.fixed(size.width, size.height))
+        return layout(size.width, size.height) { placeable.place(0, 0) }
+    }
 
     override fun onRemeasured(size: IntSize) {
         if (size.width <= 0 || size.height <= 0) return
