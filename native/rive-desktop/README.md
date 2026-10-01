@@ -63,9 +63,9 @@ is produced by the **Build native desktop runtime** workflow
 from the pinned `rive-runtime` commit above, on a clean macOS arm64 runner:
 
 ```
-sha256  1d6bcd505f64f4b733755484f6c5f69a8171a3589dfd7e2a1e91297f8f149409
-size    9539800 bytes
-built   GitHub Actions run 34628260905
+sha256  449734c9e9777c6b81dc8d3cf96c1c63cbcbb8297b654d70ffa4d9c180a06e7a
+size    9542280 bytes
+built   GitHub Actions run 36704728449 (angelix/Rive-CMP)
 ```
 
 The binary this replaced was built before the pin was recorded and could not be

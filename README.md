@@ -320,6 +320,32 @@ fun rememberRiveComposition(
 - `fit`: How the animation should fit within its container (default: `RiveFit.CONTAIN`)
 - `stateMachineName`: Optional name of the state machine to use
 
+## Data Binding
+
+Pass `onViewModelInstance` to bind the artboard's default view model instance and receive it once
+the file has loaded. Look properties up by path, then read, write or observe them:
+
+```kotlin
+var rating by remember { mutableStateOf<RiveProperty<Float>?>(null) }
+
+CustomRiveAnimation(
+    composition = composition,
+    stateMachineName = "State Machine 1",
+    onViewModelInstance = { viewModel -> rating = viewModel.number("rating") },
+)
+
+LaunchedEffect(rating) {
+    rating?.valueFlow?.collect { println("rating is $it") }
+}
+```
+
+- `number`, `string`, `boolean`, `color` (ARGB `Int`), `enum` (the selected value's name) and
+  `trigger` are supported. Nested view models are reached with a path such as `"card/title"`.
+- A lookup returns `null` when the path does not exist or names a property of another type.
+- The callback is not called for a file without a view model.
+- The instance is valid while the animation is in the composition. `composition.reset()` binds a new
+  instance and calls the callback again; take the properties from that one.
+
 ## Requirements
 
 ### Android

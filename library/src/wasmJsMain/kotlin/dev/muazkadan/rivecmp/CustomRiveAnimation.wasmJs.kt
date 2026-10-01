@@ -4,7 +4,9 @@ package dev.muazkadan.rivecmp
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.WebElementView
@@ -27,9 +29,13 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     if (composition == null) return
+
+    val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+    val autoBind = onViewModelInstance != null
 
     val canvas = remember { document.createElement("canvas") as HTMLCanvasElement }
 
@@ -63,7 +69,7 @@ actual fun CustomRiveAnimation(
         RiveAlignment.BOTTOM_RIGHT -> "bottomRight"
     }
 
-    DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName) {
+    DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName, autoBind) {
         val layoutOptions = emptyRiveLayoutOptions().apply {
             this.fit = riveFit
             this.alignment = riveAlignment
@@ -74,6 +80,7 @@ actual fun CustomRiveAnimation(
             this.canvas = canvas
             this.autoplay = autoPlay
             this.layout = layout
+            this.autoBind = autoBind
 
             if (stateMachineName != null) {
                 this.stateMachines = stateMachineName
@@ -93,15 +100,32 @@ actual fun CustomRiveAnimation(
         }
 
         var r: Rive? = null
+        var boundInstance: WasmRiveViewModelInstance? = null
+
+        // Hands the instance the runtime currently has bound to the callback.
+        val deliverBoundInstance = {
+            boundInstance?.release()
+            val instance = r?.viewModelInstance
+            boundInstance = if (autoBind && instance != null) {
+                WasmRiveViewModelInstance(instance).also { currentOnViewModelInstance?.invoke(it) }
+            } else {
+                null
+            }
+        }
 
         options.onLoad = {
             r?.resizeDrawingSurfaceToCanvas()
+            deliverBoundInstance()
         }
 
         r = createRive(options)
         composition.connectToAnimationView(r)
+        composition.autoBind = autoBind
+        composition.afterReset = deliverBoundInstance
 
         onDispose {
+            boundInstance?.release()
+            composition.afterReset = null
             composition.connectToAnimationView(null)
             r.stop()
             r.cleanup()
@@ -133,7 +157,8 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition = rememberRiveComposition(url) {
         RiveCompositionSpec.url(url)
@@ -145,7 +170,9 @@ actual fun CustomRiveAnimation(
         autoPlay = autoPlay,
         artboardName = artboardName,
         fit = fit,
-        stateMachineName = stateMachineName
+        stateMachineName = stateMachineName,
+        overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }
 
@@ -159,7 +186,8 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition = rememberRiveComposition(byteArray) {
         RiveCompositionSpec.byteArray(byteArray)
@@ -171,6 +199,8 @@ actual fun CustomRiveAnimation(
         autoPlay = autoPlay,
         artboardName = artboardName,
         fit = fit,
-        stateMachineName = stateMachineName
+        stateMachineName = stateMachineName,
+        overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }

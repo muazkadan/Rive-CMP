@@ -9,6 +9,9 @@ actual class RiveComposition internal actual constructor(
     internal actual val spec: RiveCompositionSpec = spec
     private var animationViewRef: RiveAnimationView? = null
 
+    /** Runs after [reset], which leaves the view without a bound view model instance. */
+    internal var afterReset: (() -> Unit)? = null
+
     actual fun setNumberInput(stateMachineName: String, name: String, value: Float) {
         animationViewRef?.setNumberState(
             stateMachineName = stateMachineName,
@@ -35,6 +38,7 @@ actual class RiveComposition internal actual constructor(
 
     actual fun reset() {
         animationViewRef?.reset()
+        afterReset?.invoke()
     }
 
     actual fun stop() {

@@ -2,7 +2,9 @@ package dev.muazkadan.rivecmp
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
@@ -31,13 +33,21 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     if (composition != null) {
+        val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+        val autoBind = onViewModelInstance != null
+        val boundInstances = remember { mutableMapOf<RiveAnimationController, MutableList<IosRiveViewModelInstance>>() }
+
         when (val spec = composition.spec) {
             is RiveUrlCompositionSpec -> {
-                val animationController = remember(spec.url, autoPlay, artboardName, fit, stateMachineName, alignment) {
+                val animationController = remember(spec.url, autoPlay, artboardName, fit, stateMachineName, alignment, autoBind) {
                     val controller = RiveAnimationController()
+                    if (autoBind) {
+                        bindViewModelInstance(controller, boundInstances.getOrPut(controller) { mutableListOf() }) { currentOnViewModelInstance?.invoke(it) }
+                    }
                     controller.setAnimationItemWithUrl(
                         url = spec.url,
                         autoPlay = autoPlay,
@@ -46,12 +56,15 @@ actual fun CustomRiveAnimation(
                         fit = fit.toIosFit(),
                         alignment = alignment.toIosAlignment()
                     )
-                    composition.connectToAnimationView(controller)
                     controller
                 }
 
-                DisposableEffect(Unit) {
+                // Keyed on the controller so a replaced controller is released, and connected here so
+                // the replaced one's disposal cannot disconnect its successor.
+                DisposableEffect(animationController) {
+                    composition.connectToAnimationView(animationController)
                     onDispose {
+                        boundInstances.remove(animationController)?.releaseAll()
                         // Disconnect composition first to prevent calls on released controller
                         composition.connectToAnimationView(null)
                         animationController.releaseAnimation()
@@ -70,8 +83,11 @@ actual fun CustomRiveAnimation(
                 )
             }
             is RiveByteArrayCompositionSpec -> {
-                val animationController = remember(spec.byteArray, autoPlay, artboardName, fit, stateMachineName, alignment) {
+                val animationController = remember(spec.byteArray, autoPlay, artboardName, fit, stateMachineName, alignment, autoBind) {
                     val controller = RiveAnimationController()
+                    if (autoBind) {
+                        bindViewModelInstance(controller, boundInstances.getOrPut(controller) { mutableListOf() }) { currentOnViewModelInstance?.invoke(it) }
+                    }
 
                     // Convert ByteArray to NSData
                     val nsData = spec.byteArray.usePinned { pinned ->
@@ -89,12 +105,15 @@ actual fun CustomRiveAnimation(
                         fit = fit.toIosFit(),
                         alignment = alignment.toIosAlignment()
                     )
-                    composition.connectToAnimationView(controller)
                     controller
                 }
 
-                DisposableEffect(Unit) {
+                // Keyed on the controller so a replaced controller is released, and connected here so
+                // the replaced one's disposal cannot disconnect its successor.
+                DisposableEffect(animationController) {
+                    composition.connectToAnimationView(animationController)
                     onDispose {
+                        boundInstances.remove(animationController)?.releaseAll()
                         // Disconnect composition first to prevent calls on released controller
                         composition.connectToAnimationView(null)
                         animationController.releaseAnimation()
@@ -127,10 +146,18 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
-    val animationController = remember(url, autoPlay, artboardName, fit, stateMachineName, alignment) {
+    val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+    val autoBind = onViewModelInstance != null
+    val boundInstances = remember { mutableMapOf<RiveAnimationController, MutableList<IosRiveViewModelInstance>>() }
+
+    val animationController = remember(url, autoPlay, artboardName, fit, stateMachineName, alignment, autoBind) {
         val controller = RiveAnimationController()
+        if (autoBind) {
+            bindViewModelInstance(controller, boundInstances.getOrPut(controller) { mutableListOf() }) { currentOnViewModelInstance?.invoke(it) }
+        }
         controller.setAnimationItemWithUrl(
             url = url,
             autoPlay = autoPlay,
@@ -142,8 +169,10 @@ actual fun CustomRiveAnimation(
         controller
     }
 
-    DisposableEffect(Unit) {
+    // Keyed on the controller so a replaced controller is released.
+    DisposableEffect(animationController) {
         onDispose {
+            boundInstances.remove(animationController)?.releaseAll()
             animationController.releaseAnimation()
         }
     }
@@ -172,10 +201,18 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
-    val animationController = remember(byteArray, autoPlay, artboardName, fit, stateMachineName, alignment) {
+    val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+    val autoBind = onViewModelInstance != null
+    val boundInstances = remember { mutableMapOf<RiveAnimationController, MutableList<IosRiveViewModelInstance>>() }
+
+    val animationController = remember(byteArray, autoPlay, artboardName, fit, stateMachineName, alignment, autoBind) {
         val controller = RiveAnimationController()
+        if (autoBind) {
+            bindViewModelInstance(controller, boundInstances.getOrPut(controller) { mutableListOf() }) { currentOnViewModelInstance?.invoke(it) }
+        }
 
         // Convert ByteArray to NSData
         val nsData = byteArray.usePinned { pinned ->
@@ -196,8 +233,10 @@ actual fun CustomRiveAnimation(
         controller
     }
 
-    DisposableEffect(Unit) {
+    // Keyed on the controller so a replaced controller is released.
+    DisposableEffect(animationController) {
         onDispose {
+            boundInstances.remove(animationController)?.releaseAll()
             animationController.releaseAnimation()
         }
     }
@@ -212,4 +251,32 @@ actual fun CustomRiveAnimation(
         },
         properties = UIKitInteropProperties(placedAsOverlay = overlay)
     )
+}
+
+/**
+ * Asks [controller] to auto-bind and hand each bound instance to [onViewModelInstance], keeping it
+ * in [bound] so its listeners can be released. Must run before the controller is given its
+ * animation. The controller calls back on a later turn of the main run loop, never during
+ * composition.
+ */
+@OptIn(ExperimentalForeignApi::class, ExperimentalRiveCmpApi::class)
+private fun bindViewModelInstance(
+    controller: RiveAnimationController,
+    bound: MutableList<IosRiveViewModelInstance>,
+    onViewModelInstance: (RiveViewModelInstance) -> Unit,
+) {
+    controller.setOnViewModelInstance { instance ->
+        if (instance != null) {
+            // A new instance replaces the one bound before, for example after a reset.
+            bound.releaseAll()
+            IosRiveViewModelInstance(instance, onWrite = { controller.resumePlayback() })
+                .also { bound += it }
+                .let(onViewModelInstance)
+        }
+    }
+}
+
+private fun MutableList<IosRiveViewModelInstance>.releaseAll() {
+    forEach { it.release() }
+    clear()
 }

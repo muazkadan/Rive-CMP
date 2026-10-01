@@ -43,6 +43,19 @@ public class RiveFileController(
     public var artboard: Artboard = artboard
         private set
 
+    /**
+     * The view model instance bound by auto-binding, or null when auto-binding is off or the
+     * artboard has no default view model.
+     */
+    public var viewModelInstance: ViewModelInstance? = null
+        private set
+
+    /**
+     * Called with the instance each time auto-binding binds one after construction, which happens
+     * when the artboard is instanced again by [selectArtboard].
+     */
+    public var onViewModelInstanceBound: ((ViewModelInstance) -> Unit)? = null
+
     init {
         setArtboard()
     }
@@ -58,13 +71,22 @@ public class RiveFileController(
 
     private fun setArtboard() {
         if (autoBind) {
-            val defaultInstance = file.defaultViewModelForArtboard(artboard).createDefaultInstance()
-            artboard.viewModelInstance = defaultInstance
-            // Since state machines aren't created until play(),
-            // we need to check if they need to be created now.
-            (stateMachineName
-                ?: artboard.stateMachineNames.firstOrNull())?.let(::getOrCreateStateMachines)
-            stateMachines.forEach { it.viewModelInstance = defaultInstance }
+            val defaultInstance = try {
+                file.defaultViewModelForArtboard(artboard).createDefaultInstance()
+            } catch (e: ViewModelException) {
+                RiveLog.d(TAG, "Could not auto-bind artboard ${artboard.name}: ${e.message}")
+                null
+            }
+            viewModelInstance = defaultInstance
+            if (defaultInstance != null) {
+                artboard.viewModelInstance = defaultInstance
+                // Since state machines aren't created until play(),
+                // we need to check if they need to be created now.
+                (stateMachineName
+                    ?: artboard.stateMachineNames.firstOrNull())?.let(::getOrCreateStateMachines)
+                stateMachines.forEach { it.viewModelInstance = defaultInstance }
+                onViewModelInstanceBound?.invoke(defaultInstance)
+            }
         }
         if (autoplay) {
             if (animationName != null) play(animationName)
@@ -122,8 +144,11 @@ public class RiveFileController(
         // no-op advance.
         if (elapsed > 0.0) stateMachinesToPause.forEach { pause(stateMachine = it) }
 
-        // Poll the assigned view model instances for changes.
-        playingStateMachines.mapNotNull(StateMachineInstance::viewModelInstance)
+        // Poll the assigned view model instances for changes. A state machine that settled in this
+        // advance was just paused, so poll every state machine's instance and the auto-bound one,
+        // not only those still playing; otherwise a change made while idle is never reported.
+        (stateMachines.mapNotNull(StateMachineInstance::viewModelInstance) + listOfNotNull(viewModelInstance))
+            .distinct()
             .forEach(ViewModelInstance::pollChanges)
     }
 
@@ -194,6 +219,14 @@ public class RiveFileController(
         // stop will modify animations, so we cut a list of it first.
         if (animations.isNotEmpty()) animations.toList().forEach(::stop)
         if (stateMachines.isNotEmpty()) stateMachines.toList().forEach(::stop)
+    }
+
+    /**
+     * Plays the state machines again so a view model change made from code is applied on the next
+     * advance, even after they settled.
+     */
+    internal fun resumeStateMachines() {
+        stateMachines.toList().forEach { play(it, settleStateMachineState = false) }
     }
 
     /**
@@ -290,6 +323,9 @@ public class RiveFileController(
         val stateMachineInstances = stateMachines(animationName)
         return stateMachineInstances.ifEmpty {
             val stateMachineInstance = artboard.stateMachine(animationName)
+            // A state machine created after binding, for example when playing again after a stop,
+            // observes the same view model instance as the artboard.
+            viewModelInstance?.let { stateMachineInstance.viewModelInstance = it }
             stateMachines.add(stateMachineInstance)
             listOf(stateMachineInstance)
         }

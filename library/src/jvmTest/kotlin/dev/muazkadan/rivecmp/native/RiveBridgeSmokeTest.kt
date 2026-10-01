@@ -25,6 +25,8 @@ class RiveBridgeSmokeTest {
 
             val artboard = file.firstArtboard
             assertTrue(artboard.name.isNotEmpty(), "Expected artboard to have a name")
+            assertTrue(artboard.width > 0f, "Expected artboard to have a width")
+            assertTrue(artboard.height > 0f, "Expected artboard to have a height")
         } finally {
             file.release()
         }

@@ -12,6 +12,7 @@ external object RiveSDK {
         fun resizeToCanvas()
         fun resizeDrawingSurfaceToCanvas()
         fun reset(params: dynamic)
+        val viewModelInstance: dynamic
     }
 
     object Fit {
