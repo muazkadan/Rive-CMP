@@ -171,6 +171,7 @@ private class RiveRendererNode(
         set(value) {
             if (field === value) return
             field = value
+            artboardSize = null
             invalidateMeasurement()
             bindBuffer()
         }
@@ -182,11 +183,17 @@ private class RiveRendererNode(
     private var bitmap: Bitmap? = null
     private var imageBitmap: ImageBitmap? = null
 
+    /** The artboard's bounds as last measured, so a measure pass doesn't cross JNI. */
+    private var artboardSize: ArtboardSize? = null
+
+    private fun readArtboardSize(): ArtboardSize =
+        controller.artboard.let { ArtboardSize(it.width, it.height) }
+
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
-        val artboard = controller.artboard
+        val artboard = artboardSize ?: readArtboardSize().also { artboardSize = it }
         val size = measureArtboard(
             constraints = constraints,
-            artboard = ArtboardSize(artboard.width, artboard.height),
+            artboard = artboard,
             fit = controller.fit,
             density = density,
         )
@@ -235,6 +242,13 @@ private class RiveRendererNode(
                         controller.artboardRenderer.doFrame((frameTime - lastFrameTime) / 1_000f)
                         bitmap?.notifyPixelsChanged()
                         invalidateDraw()
+                        // The bounds can change while playing, e.g. when reset() instances the
+                        // artboard again
+                        val size = readArtboardSize()
+                        if (size != artboardSize) {
+                            artboardSize = size
+                            invalidateMeasurement()
+                        }
                     }
                     lastFrameTime = frameTime
                 }
