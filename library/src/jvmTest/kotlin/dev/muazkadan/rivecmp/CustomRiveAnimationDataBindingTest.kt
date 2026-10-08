@@ -260,6 +260,7 @@ class CustomRiveAnimationDataBindingTest {
         repeat(5) { mainClock.advanceTimeByFrame() }
 
         assertEquals(2, received.size, "Expected reset to call back again")
+        assertNull(received.first().trigger("trigger"), "Expected the replaced instance to be released")
         val trigger = assertNotNull(received.last().trigger("trigger"))
         scope.launch { trigger.triggers.collect { firings++ } }
         trigger.trigger()
