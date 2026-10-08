@@ -3,6 +3,7 @@
 import io.github.frankois944.spmForKmp.swiftPackageConfig
 import io.github.frankois944.spmForKmp.utils.ExperimentalSpmForKmpFeature
 import org.gradle.api.attributes.java.TargetJvmVersion
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -116,6 +117,17 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.compose.ui.test)
         }
+    }
+}
+
+// Print a failed test's exception with its stack trace, not just its type and line, so a failure
+// on CI can be traced without the reports.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = TestExceptionFormat.FULL
+        showCauses = true
+        showStackTraces = true
     }
 }
 
