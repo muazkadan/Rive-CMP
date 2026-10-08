@@ -89,6 +89,16 @@ Java_dev_muazkadan_rivecmp_native_File_cppDefaultViewModelForArtboard(
     return reinterpret_cast<jlong>(viewModel);
 }
 
+JNIEXPORT jlong JNICALL
+Java_dev_muazkadan_rivecmp_native_File_cppViewModelByName(JNIEnv *env,
+                                                          jobject,
+                                                          jlong ref,
+                                                          jstring name) {
+    auto file = reinterpret_cast<rive::File *>(ref);
+    return reinterpret_cast<jlong>(
+        file->viewModelByName(JStringToString(env, name)));
+}
+
 JNIEXPORT void JNICALL
 Java_dev_muazkadan_rivecmp_native_File_cppDelete(JNIEnv *,
                                                             jobject,

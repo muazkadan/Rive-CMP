@@ -2,7 +2,9 @@ package dev.muazkadan.rivecmp
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.WebElementView
@@ -25,9 +27,13 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     if (composition == null) return
+
+    val currentOnViewModelInstance by rememberUpdatedState(onViewModelInstance)
+    val autoBind = onViewModelInstance != null
 
     val canvas = remember { document.createElement("canvas") as HTMLCanvasElement }
 
@@ -65,7 +71,7 @@ actual fun CustomRiveAnimation(
         RiveAlignment.BOTTOM_RIGHT -> RiveSDK.Alignment.BottomRight
     }
 
-    DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName) {
+    DisposableEffect(composition.spec, canvas, fit, alignment, autoPlay, artboardName, stateMachineName, autoBind) {
         val layoutOptions = js("{}")
         layoutOptions.fit = riveFit
         layoutOptions.alignment = riveAlignment
@@ -75,6 +81,7 @@ actual fun CustomRiveAnimation(
         options.canvas = canvas
         options.autoplay = autoPlay
         options.layout = layout
+        options.autoBind = autoBind
         
         if (stateMachineName != null) {
             options.stateMachines = stateMachineName
@@ -95,18 +102,35 @@ actual fun CustomRiveAnimation(
         }
 
         var r: RiveSDK.Rive? = null
+        var boundInstance: JsRiveViewModelInstance? = null
 
         // Add onLoad callback to ensure the drawing surface matches the canvas size
+        // Hands the instance the runtime currently has bound to the callback.
+        val deliverBoundInstance = {
+            boundInstance?.release()
+            val instance = r?.viewModelInstance
+            boundInstance = if (autoBind && instance != null) {
+                JsRiveViewModelInstance(instance).also { currentOnViewModelInstance?.invoke(it) }
+            } else {
+                null
+            }
+        }
+
         options.onLoad = {
             r?.resizeDrawingSurfaceToCanvas()
+            deliverBoundInstance()
         }
 
         r = RiveSDK.Rive(options)
 
         // Connect composition to this instance
         composition.connectToAnimationView(r)
+        composition.autoBind = autoBind
+        composition.afterReset = deliverBoundInstance
 
         onDispose {
+            boundInstance?.release()
+            composition.afterReset = null
             // Disconnect composition first to prevent calls on cleaned-up instance
             composition.connectToAnimationView(null)
             r.stop()
@@ -133,7 +157,8 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition = rememberRiveComposition(url) {
         RiveCompositionSpec.url(url)
@@ -145,7 +170,9 @@ actual fun CustomRiveAnimation(
         autoPlay = autoPlay,
         artboardName = artboardName,
         fit = fit,
-        stateMachineName = stateMachineName
+        stateMachineName = stateMachineName,
+        overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }
 
@@ -159,7 +186,8 @@ actual fun CustomRiveAnimation(
     artboardName: String?,
     fit: RiveFit,
     stateMachineName: String?,
-    overlay: Boolean
+    overlay: Boolean,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
     val composition = rememberRiveComposition(byteArray) {
         RiveCompositionSpec.byteArray(byteArray)
@@ -171,6 +199,8 @@ actual fun CustomRiveAnimation(
         autoPlay = autoPlay,
         artboardName = artboardName,
         fit = fit,
-        stateMachineName = stateMachineName
+        stateMachineName = stateMachineName,
+        overlay = overlay,
+        onViewModelInstance = onViewModelInstance,
     )
 }

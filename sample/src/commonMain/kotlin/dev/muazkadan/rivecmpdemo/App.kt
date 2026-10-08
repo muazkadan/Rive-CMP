@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -69,7 +70,10 @@ fun App() {
             modifier = Modifier.fillMaxSize(),
             color = Color(0xFF001C1C)
         ) {
-            CustomPullRefreshSample(height = 200f)
+            Column {
+                DataBindingSample()
+                CustomPullRefreshSample(height = 200f)
+            }
         }
     }
 }

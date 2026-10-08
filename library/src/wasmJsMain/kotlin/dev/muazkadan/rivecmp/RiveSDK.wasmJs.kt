@@ -15,6 +15,7 @@ external class Rive(options: RiveOptions) : JsAny {
     fun resizeToCanvas()
     fun resizeDrawingSurfaceToCanvas()
     fun reset(params: JsAny)
+    val viewModelInstance: RiveViewModelInstanceJs?
 }
 
 @JsName("Layout")
@@ -34,4 +35,26 @@ external interface RiveOptions : JsAny {
     var src: String?
     var buffer: JsAny?
     var onLoad: (() -> Unit)?
+    var autoBind: Boolean?
+}
+
+external interface RiveViewModelInstanceJs : JsAny {
+    fun number(path: String): RiveValueJs?
+    fun string(path: String): RiveValueJs?
+    fun boolean(path: String): RiveValueJs?
+    fun color(path: String): RiveValueJs?
+    fun enum(path: String): RiveValueJs?
+    fun trigger(path: String): RiveTriggerJs?
+}
+
+external interface RiveValueJs : JsAny {
+    var value: JsAny?
+    fun on(callback: (JsAny?) -> Unit)
+    fun off()
+}
+
+external interface RiveTriggerJs : JsAny {
+    fun trigger()
+    fun on(callback: () -> Unit)
+    fun off()
 }

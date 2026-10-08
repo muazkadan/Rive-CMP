@@ -10,6 +10,16 @@ import RiveRuntime
     private var riveView: RiveView?
     private var pendingConfiguration: (url: String, autoPlay: Bool, artboardName: String?, stateMachineName: String?, fit: RiveFit, alignment: RiveAlignment)?
 
+    /// Set before `setAnimationItem` to auto-bind the artboard's default view model instance.
+    /// Called with each instance rive-ios binds.
+    public var onViewModelInstance: ((RiveDataBindingViewModel.Instance) -> Void)?
+
+    /// Keeps the bound instance alive; rive-ios hands it over without retaining it for callers.
+    private var boundViewModelInstance: RiveDataBindingViewModel.Instance?
+
+    /// The instance last handed to `onViewModelInstance`.
+    private var deliveredViewModelInstance: RiveDataBindingViewModel.Instance?
+
     override init() {
         super.init()
     }
@@ -29,7 +39,7 @@ import RiveRuntime
         releaseAnimation()
 
         // Create view model with proper configuration
-        viewModel = RiveViewModel(
+        let urlViewModel = FileLoadReportingRiveViewModel(
             webURL: url,
             stateMachineName: stateMachineName,
             fit: fit,
@@ -38,6 +48,11 @@ import RiveRuntime
             loadCdn: false,
             artboardName: artboardName
         )
+        // rive-ios builds a new RiveModel once the download finishes, without auto-binding.
+        urlViewModel.onFileLoaded = { [weak self] in self?.enableAutoBindIfRequested() }
+        viewModel = urlViewModel
+
+        enableAutoBindIfRequested()
 
         // If view was already requested, create it now
         if riveView == nil {
@@ -90,12 +105,37 @@ import RiveRuntime
                 )
             }
 
+            enableAutoBindIfRequested()
+
             // If view was already requested, create it now
             if riveView == nil {
                 createRiveViewIfNeeded()
             }
         } catch {
             print("RiveAnimationController: ERROR - Failed to create RiveFile from data: \(error)")
+        }
+    }
+
+    private func enableAutoBindIfRequested() {
+        guard onViewModelInstance != nil else { return }
+        viewModel?.riveModel?.enableAutoBind { [weak self] instance in
+            self?.deliver(instance)
+        }
+    }
+
+    /// rive-ios binds once for the artboard and once for the state machine, and again on reset and
+    /// stop, so several instances can arrive in one turn of the run loop. Only the last stays bound;
+    /// it is handed over on the next turn, which also keeps the callback out of the caller's
+    /// current work.
+    private func deliver(_ instance: RiveDataBindingViewModel.Instance) {
+        boundViewModelInstance = instance
+        DispatchQueue.main.async { [weak self] in
+            guard let self,
+                  self.boundViewModelInstance === instance,
+                  self.deliveredViewModelInstance !== instance
+            else { return }
+            self.deliveredViewModelInstance = instance
+            self.onViewModelInstance?(instance)
         }
     }
 
@@ -142,6 +182,9 @@ import RiveRuntime
             riveView?.removeFromSuperview()
         }
         riveView = nil
+        viewModel?.riveModel?.disableAutoBind()
+        boundViewModelInstance = nil
+        deliveredViewModelInstance = nil
         viewModel = nil
         pendingConfiguration = nil
     }
@@ -162,11 +205,27 @@ import RiveRuntime
         viewModel?.pause()
     }
 
+    /// Restarts the render loop, which rive-ios stops once the state machine settles, so a view
+    /// model property changed from code is applied.
+    public func resumePlayback() {
+        viewModel?.play()
+    }
+
     public func reset() {
         viewModel?.reset()
     }
 
     public func stop() {
         viewModel?.stop()
+    }
+}
+
+/// A RiveViewModel that reports when its downloaded file has loaded.
+private final class FileLoadReportingRiveViewModel: RiveViewModel {
+    var onFileLoaded: (() -> Void)?
+
+    override func riveFileDidLoad(_ riveFile: RiveFile) throws {
+        try super.riveFileDidLoad(riveFile)
+        onFileLoaded?()
     }
 }
