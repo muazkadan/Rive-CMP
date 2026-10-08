@@ -20,6 +20,22 @@ Java_dev_muazkadan_rivecmp_native_Artboard_cppName(JNIEnv *env,
     return env->NewStringUTF(artboard->name().c_str());
 }
 
+JNIEXPORT jfloat JNICALL
+Java_dev_muazkadan_rivecmp_native_Artboard_cppWidth(JNIEnv *,
+                                                               jobject,
+                                                               jlong ref) {
+    auto artboard = reinterpret_cast<rive::ArtboardInstance *>(ref);
+    return artboard->bounds().width();
+}
+
+JNIEXPORT jfloat JNICALL
+Java_dev_muazkadan_rivecmp_native_Artboard_cppHeight(JNIEnv *,
+                                                                jobject,
+                                                                jlong ref) {
+    auto artboard = reinterpret_cast<rive::ArtboardInstance *>(ref);
+    return artboard->bounds().height();
+}
+
 JNIEXPORT jlong JNICALL
 Java_dev_muazkadan_rivecmp_native_Artboard_cppAnimationByName(JNIEnv *env,
                                                                          jobject,
