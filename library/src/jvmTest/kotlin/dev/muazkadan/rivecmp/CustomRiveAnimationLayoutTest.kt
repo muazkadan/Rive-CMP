@@ -2,6 +2,7 @@ package dev.muazkadan.rivecmp
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -12,11 +13,9 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import dev.muazkadan.rivecmp.native.File
-import dev.muazkadan.rivecmp.native.model.Fit
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,13 +38,6 @@ class CustomRiveAnimationLayoutTest {
         RiveDesktop.init()
         // The view requests a frame every frame, so it never goes idle on its own
         mainClock.autoAdvance = false
-        val artboard = File(bytes).let { file ->
-            try {
-                file.firstArtboard.let { ArtboardSize(it.width, it.height) }
-            } finally {
-                file.release()
-            }
-        }
 
         setContent {
             CompositionLocalProvider(LocalDensity provides Density(1f)) {
@@ -59,9 +51,30 @@ class CustomRiveAnimationLayoutTest {
             onAllNodesWithTag(TAG).fetchSemanticsNodes().isNotEmpty()
         }
 
-        val size = onNodeWithTag(TAG).fetchSemanticsNode().size
-        assertTrue(size.width > 0 && size.height > 0, "Expected a non-empty view, was $size")
-        assertEquals(measureArtboard(Constraints(maxWidth = 300, maxHeight = 600), artboard, Fit.CONTAIN), size)
+        // The 574 x 511 artboard contained in 300 x 600: scaled by 300 / 574
+        assertEquals(IntSize(300, 267), onNodeWithTag(TAG).fetchSemanticsNode().size)
+    }
+
+    @Test
+    fun takesTheArtboardSizeInDpWhenUnconstrained() = runComposeUiTest {
+        RiveDesktop.init()
+        // The view requests a frame every frame, so it never goes idle on its own
+        mainClock.autoAdvance = false
+
+        setContent {
+            CompositionLocalProvider(LocalDensity provides Density(2f)) {
+                Box(Modifier.wrapContentSize(unbounded = true)) {
+                    CustomRiveAnimation(modifier = Modifier.testTag(TAG), byteArray = bytes)
+                }
+            }
+        }
+        waitUntil(timeoutMillis = 5_000) {
+            mainClock.advanceTimeByFrame()
+            onAllNodesWithTag(TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // The 574 x 511 artboard at one dp per unit, two pixels per dp
+        assertEquals(IntSize(1148, 1022), onNodeWithTag(TAG).fetchSemanticsNode().size)
     }
 
     @Test

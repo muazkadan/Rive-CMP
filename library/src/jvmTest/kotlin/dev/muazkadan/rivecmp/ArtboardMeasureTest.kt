@@ -52,8 +52,18 @@ class ArtboardMeasureTest {
     }
 
     @Test
-    fun layoutScalesTheArtboardByTheScaleFactor() {
-        assertEquals(IntSize(1000, 1000), measureArtboard(Constraints(), square, Fit.LAYOUT, scaleFactor = 2f))
+    fun unconstrainedTakesTheArtboardSizeInDp() {
+        assertEquals(IntSize(2000, 1300), measureArtboard(Constraints(), landscape, Fit.CONTAIN, density = 2f))
+    }
+
+    @Test
+    fun boundedWidthWithUnboundedHeightScalesUpToTheArtboardSizeInDp() {
+        assertEquals(IntSize(1000, 1000), measureArtboard(Constraints(maxWidth = 2000), square, Fit.CONTAIN, density = 2f))
+    }
+
+    @Test
+    fun noneDrawsOneUnitPerPixelWhateverTheDensity() {
+        assertEquals(IntSize(500, 500), measureArtboard(Constraints(), square, Fit.NONE, density = 2f))
     }
 
     @Test

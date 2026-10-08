@@ -188,7 +188,7 @@ private class RiveRendererNode(
             constraints = constraints,
             artboard = ArtboardSize(artboard.width, artboard.height),
             fit = controller.fit,
-            scaleFactor = controller.layoutScaleFactorActive,
+            density = density,
         )
         val placeable = measurable.measure(Constraints.fixed(size.width, size.height))
         return layout(size.width, size.height) { placeable.place(0, 0) }
