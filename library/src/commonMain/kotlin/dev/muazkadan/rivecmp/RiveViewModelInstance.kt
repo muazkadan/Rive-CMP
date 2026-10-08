@@ -29,7 +29,11 @@ interface RiveViewModelInstance {
 /** A view model property holding a value of type [T]. */
 @ExperimentalRiveCmpApi
 interface RiveProperty<T> {
-    /** The current value. Writing it drives the graphic. */
+    /**
+     * The current value. Writing it drives the graphic. Like setting a state machine input, a write
+     * resumes playback that has stopped, including after [RiveComposition.pause], on Android, iOS
+     * and desktop; on the web a paused animation stays paused.
+     */
     var value: T
 
     /** The value over time, updated by the graphic and by writes to [value]. */
@@ -39,7 +43,7 @@ interface RiveProperty<T> {
 /** A view model trigger property. */
 @ExperimentalRiveCmpApi
 interface RiveTrigger {
-    /** Fires the trigger. */
+    /** Fires the trigger, resuming playback as a write to [RiveProperty.value] does. */
     fun trigger()
 
     /**
