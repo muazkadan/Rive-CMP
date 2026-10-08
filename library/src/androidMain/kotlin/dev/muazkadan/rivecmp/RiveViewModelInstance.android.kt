@@ -11,7 +11,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.withFrameNanos
 import app.rive.runtime.kotlin.RiveAnimationView
 import app.rive.runtime.kotlin.core.ViewModelInstance
 import app.rive.runtime.kotlin.core.ViewModelProperty
@@ -19,6 +18,7 @@ import app.rive.runtime.kotlin.core.ViewModelTriggerProperty
 import app.rive.runtime.kotlin.core.errors.RiveException
 import app.rive.runtime.kotlin.core.errors.ViewModelException
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -88,7 +88,8 @@ private class AndroidRiveTrigger(
  * set up the scene, and again with a fresh instance each time [composition] is reset.
  *
  * rive-android binds on attach for bytes and after the download for URLs and offers no notification
- * for it, so this waits frame by frame for the active artboard. A view created before the callback
+ * for it, so this polls for the active artboard. It polls with a delay rather than per frame, so a
+ * file that never loads (a failed download, say) doesn't keep requesting frames while it is shown. A view created before the callback
  * was set has nothing bound yet, and a reset unbinds, so both bind a fresh default instance here.
  */
 @OptIn(ExperimentalRiveCmpApi::class)
@@ -103,7 +104,7 @@ internal fun BindViewModelInstance(
 
     LaunchedEffect(view, enabled) {
         if (view == null || !enabled) return@LaunchedEffect
-        while (view.controller.activeArtboard == null) withFrameNanos { }
+        while (view.controller.activeArtboard == null) delay(ARTBOARD_POLL_INTERVAL_MS)
         val instance = view.controller.activeArtboard?.viewModelInstance ?: view.bindDefaultViewModelInstance()
         instance?.let { currentOnViewModelInstance?.invoke(view.adapt(it)) }
     }
@@ -140,3 +141,5 @@ private fun RiveAnimationView.bindDefaultViewModelInstance(): ViewModelInstance?
     controller.stateMachines.forEach { it.viewModelInstance = instance }
     return instance
 }
+
+private const val ARTBOARD_POLL_INTERVAL_MS = 16L

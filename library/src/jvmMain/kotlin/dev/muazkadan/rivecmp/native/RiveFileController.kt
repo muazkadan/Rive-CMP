@@ -56,6 +56,9 @@ public class RiveFileController(
      */
     public var onViewModelInstanceBound: ((ViewModelInstance) -> Unit)? = null
 
+    /** The artboard's default view model, looked up once and reused when the artboard is instanced again. */
+    private var defaultViewModel: ViewModel? = null
+
     init {
         setArtboard()
     }
@@ -72,10 +75,18 @@ public class RiveFileController(
     private fun setArtboard() {
         if (autoBind) {
             val defaultInstance = try {
-                file.defaultViewModelForArtboard(artboard).createDefaultInstance()
+                val viewModel = defaultViewModel
+                    ?: file.defaultViewModelForArtboard(artboard).also { defaultViewModel = it }
+                viewModel.createDefaultInstance()
             } catch (e: ViewModelException) {
                 RiveLog.d(TAG, "Could not auto-bind artboard ${artboard.name}: ${e.message}")
                 null
+            }
+            // The instance bound before belongs to the replaced artboard, so release it rather than
+            // leave it to the file. Properties taken from it then find nothing and write nothing.
+            viewModelInstance?.let { replaced ->
+                defaultViewModel?.dependencies?.remove(replaced)
+                replaced.release()
             }
             viewModelInstance = defaultInstance
             if (defaultInstance != null) {
@@ -147,9 +158,10 @@ public class RiveFileController(
         // Poll the assigned view model instances for changes. A state machine that settled in this
         // advance was just paused, so poll every state machine's instance and the auto-bound one,
         // not only those still playing; otherwise a change made while idle is never reported.
-        (stateMachines.mapNotNull(StateMachineInstance::viewModelInstance) + listOfNotNull(viewModelInstance))
-            .distinct()
-            .forEach(ViewModelInstance::pollChanges)
+        viewModelInstance?.pollChanges()
+        stateMachines.forEach { stateMachine ->
+            stateMachine.viewModelInstance?.takeIf { it !== viewModelInstance }?.pollChanges()
+        }
     }
 
     public fun play(

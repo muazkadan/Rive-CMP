@@ -49,7 +49,8 @@ internal class WasmRiveViewModelInstance(private val instance: RiveViewModelInst
     override fun color(path: String): RiveProperty<Int>? = cached("color", path) {
         property(
             instance.color(path),
-            read = { (it as JsNumber).toInt() },
+            // Through Long, so an ARGB value reported as unsigned wraps into an Int instead of clamping.
+            read = { (it as JsNumber).toDouble().toLong().toInt() },
             write = { it.toJsNumber() },
         )
     }

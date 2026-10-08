@@ -33,7 +33,8 @@ internal class JsRiveViewModelInstance(private val instance: dynamic) : RiveView
     }
 
     override fun color(path: String): RiveProperty<Int>? = cached("color", path) {
-        property(instance.color(path), read = { (it as Number).toInt() }, write = { it })
+        // Through Long, so an ARGB value reported as unsigned wraps into an Int instead of clamping.
+        property(instance.color(path), read = { (it as Number).toDouble().toLong().toInt() }, write = { it })
     }
 
     override fun enum(path: String): RiveProperty<String>? = cached("enum", path) {

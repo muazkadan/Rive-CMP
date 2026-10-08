@@ -18,6 +18,8 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.WeakReference
 import nativeIosShared.RiveAnimationController
 import platform.Foundation.NSData
 import platform.Foundation.create
@@ -259,17 +261,20 @@ actual fun CustomRiveAnimation(
  * animation. The controller calls back on a later turn of the main run loop, never during
  * composition.
  */
-@OptIn(ExperimentalForeignApi::class, ExperimentalRiveCmpApi::class)
+@OptIn(ExperimentalForeignApi::class, ExperimentalRiveCmpApi::class, ExperimentalNativeApi::class)
 private fun bindViewModelInstance(
     controller: RiveAnimationController,
     bound: MutableList<IosRiveViewModelInstance>,
     onViewModelInstance: (RiveViewModelInstance) -> Unit,
 ) {
+    // The controller keeps this callback, so the callback must not keep the controller: a cycle
+    // through an Objective-C block is not reliably collected and would leak both.
+    val controllerRef = WeakReference(controller)
     controller.setOnViewModelInstance { instance ->
         if (instance != null) {
             // A new instance replaces the one bound before, for example after a reset.
             bound.releaseAll()
-            IosRiveViewModelInstance(instance, onWrite = { controller.resumePlayback() })
+            IosRiveViewModelInstance(instance, onWrite = { controllerRef.get()?.resumePlayback() })
                 .also { bound += it }
                 .let(onViewModelInstance)
         }
