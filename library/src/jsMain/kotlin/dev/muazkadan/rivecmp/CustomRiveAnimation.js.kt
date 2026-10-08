@@ -131,6 +131,7 @@ actual fun CustomRiveAnimation(
         onDispose {
             boundInstance?.release()
             composition.afterReset = null
+            composition.autoBind = false
             // Disconnect composition first to prevent calls on cleaned-up instance
             composition.connectToAnimationView(null)
             r.stop()
