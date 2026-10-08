@@ -108,13 +108,15 @@ actual fun CustomRiveAnimation(
     overlay: Boolean,
     onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
-    val composition by rememberRiveComposition(url) { RiveCompositionSpec.url(url) }
+    // Read once per composition, so the effect below keys on and releases the same composition.
+    // A delegated `by` property would be read again when the effect runs, by which time a
+    // background load may have completed and handed it a File it was not keyed on.
+    val composition = rememberRiveComposition(url) { RiveCompositionSpec.url(url) }.value
 
     // This overload owns the composition it creates (the caller never sees it), so - unlike the
     // `composition: RiveComposition?` overload above, where the caller manages the composition's
     // lifecycle - it's responsible for releasing its native File when done with it.
     DisposableEffect(composition) {
-        // Captured so this effect releases the File it was keyed on, not the one loaded after it
         val file = composition?.file
         onDispose { file?.release() }
     }
@@ -145,10 +147,10 @@ actual fun CustomRiveAnimation(
     overlay: Boolean,
     onViewModelInstance: ((RiveViewModelInstance) -> Unit)?,
 ) {
-    val composition by rememberRiveComposition(byteArray) { RiveCompositionSpec.byteArray(byteArray) }
+    // Read once per composition; see the url overload.
+    val composition = rememberRiveComposition(byteArray) { RiveCompositionSpec.byteArray(byteArray) }.value
 
     DisposableEffect(composition) {
-        // Captured so this effect releases the File it was keyed on, not the one loaded after it
         val file = composition?.file
         onDispose { file?.release() }
     }
