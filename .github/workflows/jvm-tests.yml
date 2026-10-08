@@ -1,0 +1,42 @@
+name: JVM tests
+
+# Runs the desktop (JVM) tests against the committed librive-desktoparm64.dylib on every PR and
+# push to main. Unlike the native build, it doesn't build Skia, so it takes minutes.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm-tests:
+    # The shipped desktop runtime is macOS arm64 only, so the tests need an arm64 Mac.
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run the JVM tests
+        run: ./gradlew :library:jvmTest
+
+      - name: Upload the test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-test-reports
+          path: |
+            library/build/reports/tests/jvmTest
+            library/build/test-results/jvmTest
+          if-no-files-found: ignore
