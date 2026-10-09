@@ -7,8 +7,9 @@ rendering via Skia's CPU rasterizer into a caller-supplied pixel buffer.
 This is **not** part of the default Gradle build for `:library` — configuring it
 triggers a full source build of rive-runtime, Skia, and its other native
 dependencies (minutes, requires Ninja, Premake, and a prebuilt Skia checkout at a
-specific path). The `:library:jvmMain` target instead ships a prebuilt binary as a
-resource (see `library/src/jvmMain/resources/`). Build this yourself only if you
+specific path). The `:library:jvmMain` target instead uses a prebuilt binary, shipped
+as a resource of the `:runtime-macos-arm64` module (`runtime-macos-arm64/src/main/resources/`)
+and published as `dev.muazkadan:rive-cmp-runtime-macos-arm64`. Build this yourself only if you
 need to target a platform/arch the prebuilt binary doesn't cover, or to modify the
 bridge itself.
 
@@ -68,6 +69,12 @@ size    9542280 bytes
 built   GitHub Actions run 36704728449 (angelix/Rive-CMP)
 ```
 
+It was rebuilt in this repository by
+[run 37836052685](https://github.com/muazkadan/Rive-CMP/actions/runs/37836052685) from `main` at
+`8402fba`, which produced a byte-identical binary (same sha256). That run then failed its test
+step on a Kotlin-side double release, fixed in
+[#182](https://github.com/muazkadan/Rive-CMP/pull/182), not on the binary.
+
 The binary this replaced was built before the pin was recorded and could not be
 reproduced from this repository. A rebuild from the pin initially segfaulted at
 `SkCanvas::save()` on first render: the pinned runtime's `make_skia_macos.sh` adds
@@ -78,9 +85,11 @@ three flags before building; see
 [#160](https://github.com/muazkadan/Rive-CMP/issues/160) for the full history.
 
 Whenever the binary is replaced, update the checksum in this file in the same
-commit, and verify the result by **running the desktop sample** — the JNI smoke
-test passes on a binary that crashes on first render, so it does not distinguish
-a good build from a bad one.
+commit, run `./gradlew :library:jvmTest`, and **run the desktop sample**. The JNI
+smoke test alone passes on a binary that crashes on first render, which is why the
+JVM tests also render an artboard headlessly
+(`CustomRiveAnimationLayoutTest.drawsTheArtboard`); the sample remains the final
+check.
 
 Verify a copy with:
 
