@@ -20,12 +20,8 @@ Android, iOS, Web, and Desktop platforms.
 
 > **⚠️ EXPERIMENTAL STATUS**
 >
-> This library is currently in an experimental state. Features, APIs, and implementation details may
-> change significantly or the project might be discontinued. Use at your own risk in production
-> applications.
->
-> **Current Limitations:**
-> - ~~On iOS, `UIKitView` does not support transparent backgrounds, resulting in opaque backgrounds for Rive animations. This is a known limitation in Compose Multiplatform. See [Issue #17](https://github.com/muazkadan/Rive-CMP/issues/17) for details and potential workarounds.~~ Fixed in [#42](https://github.com/muazkadan/Rive-CMP/pull/42).
+> This library is currently in an experimental state.
+> - Features, APIs, and implementation details may change significantly
 > - Not all features and properties from the native Rive libraries are supported yet
 > - Some advanced Rive features may not be available across all platforms
 
@@ -37,6 +33,7 @@ Android, iOS, Web, and Desktop platforms.
 - **Native Performance**: Uses platform-specific Rive implementations for optimal performance
 - **Easy Integration**: Simple Compose-style API with familiar modifier patterns
 - **State Machine Support**: Support for Rive state machines on every supported platform
+- **Data Binding**: Read, write and observe view model properties on every supported platform
 - **Flexible Configuration**: Customizable alignment, fit, artboard selection, and playback options
 - **Memory Efficient**: Value classes and immutable specifications for optimal performance
 
@@ -51,9 +48,7 @@ Android, iOS, Web, and Desktop platforms.
 
 > [!IMPORTANT]
 > **The iOS simulator on Intel Macs is not supported as of 0.4.1.** Compose Multiplatform stopped
-> publishing an `iosX64` variant in 1.11, so that target can no longer be built. `iosArm64` (devices)
-> and `iosSimulatorArm64` (Apple Silicon simulators) are unaffected. Stay on `0.4.0` if you need
-> the Intel simulator.
+> publishing an `iosX64` variant in 1.11. Stay on `0.4.0` if you need the Intel simulator.
 
 **Desktop (JVM) is currently macOS arm64 only.** There is no official Rive SDK for JVM/Desktop,
 so this bridges directly to the C++ [rive-runtime](https://github.com/rive-app/rive-runtime) via
@@ -202,6 +197,11 @@ fun MyScreen() {
 }
 ```
 
+> [!NOTE]
+> On Desktop (JVM), a `CustomRiveAnimation` without a size modifier takes its artboard's size, one
+> artboard unit per dp (per pixel with `RiveFit.NONE`), fitted into the space its parent allows. An
+> explicit size modifier always wins.
+
 ### Composition-based Loading (Recommended)
 
 ```kotlin
@@ -252,6 +252,8 @@ fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)? = null,
 )
 ```
 
@@ -268,6 +270,8 @@ fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)? = null,
 )
 ```
 
@@ -284,6 +288,8 @@ fun CustomRiveAnimation(
     artboardName: String? = null,
     fit: RiveFit = RiveFit.CONTAIN,
     stateMachineName: String? = null,
+    overlay: Boolean = true,
+    onViewModelInstance: ((RiveViewModelInstance) -> Unit)? = null,
 )
 ```
 
@@ -304,7 +310,20 @@ RiveCompositionSpec.byteArray(byteArray: ByteArray): RiveCompositionSpec
 fun rememberRiveComposition(
     vararg keys: Any?,
     spec: suspend () -> RiveCompositionSpec,
-): State<RiveComposition?>
+): RiveCompositionResult
+```
+
+`RiveCompositionResult` is a `State<RiveComposition?>`, so `by` delegation works as in the examples
+above. It also exposes the loading state:
+
+```kotlin
+val result = rememberRiveComposition { RiveCompositionSpec.url(url) }
+
+when {
+    result.isLoading -> CircularProgressIndicator()
+    result.error != null -> Text("Couldn't load the animation")
+    else -> CustomRiveAnimation(modifier = Modifier.size(200.dp), composition = result.value)
+}
 ```
 
 #### Parameters
@@ -319,6 +338,11 @@ fun rememberRiveComposition(
 - `artboardName`: Optional name of the specific artboard to use
 - `fit`: How the animation should fit within its container (default: `RiveFit.CONTAIN`)
 - `stateMachineName`: Optional name of the state machine to use
+- `overlay`: Whether the animation is drawn above (`true`) or beneath (`false`) the Compose content
+  at the same place. Used on iOS, where it controls how the native view is placed, and on Desktop;
+  it has no effect on Android or the web (default: `true`)
+- `onViewModelInstance`: Called with the bound view model instance; see [Data Binding](#data-binding)
+  (default: `null`, no binding)
 
 ## Data Binding
 
@@ -343,8 +367,20 @@ LaunchedEffect(rating) {
   `trigger` are supported. Nested view models are reached with a path such as `"card/title"`.
 - A lookup returns `null` when the path does not exist or names a property of another type.
 - The callback is not called for a file without a view model.
-- The instance is valid while the animation is in the composition. `composition.reset()` binds a new
-  instance and calls the callback again; take the properties from that one.
+- The instance is valid while the animation is in the composition. `composition.reset()` (and on
+  iOS also `composition.stop()`) binds a new instance and calls the callback again; take the
+  properties from that one.
+- The data binding types are `@ExperimentalRiveCmpApi`, like `CustomRiveAnimation`, so opt in with
+  `@OptIn(ExperimentalRiveCmpApi::class)`.
+
+> [!NOTE]
+> **Platform differences**
+> - Writing a property or firing a trigger resumes playback that has stopped, including after
+>   `composition.pause()`, on Android, iOS and Desktop, as setting a state machine input does. On the
+>   web a paused animation stays paused.
+> - `triggers` reports the graphic firing a trigger on every platform. A `trigger()` call from your
+>   own code is reported immediately on Desktop and the web, on iOS once the view next redraws, and
+>   on Android not while the graphic is idle.
 
 ## Requirements
 
@@ -362,7 +398,7 @@ LaunchedEffect(rating) {
 ### iOS
 
 - Minimum iOS: 14.0
-- Xcode: 15+
+- Xcode: 26.3+ (required by the Kotlin 2.4 toolchain)
 - Swift: 5.9+
 - Apple Silicon required for simulator builds (see the `iosX64` note above)
 
@@ -450,6 +486,17 @@ To run the sample in Android Studio, use the **androidSample** run configuration
 
    This is not needed for normal development - the JVM target uses the prebuilt binary in
    `runtime-macos-arm64`. The checkout and its Skia build are large (several GB).
+
+### Tests
+
+The desktop (JVM) tests exercise the JNI bridge, layout, rendering and data binding against the
+committed native binary, so they need an Apple Silicon Mac:
+
+```bash
+./gradlew :library:jvmTest
+```
+
+The [JVM tests](.github/workflows/jvm-tests.yml) workflow runs them on every pull request.
 
 ## License
 
