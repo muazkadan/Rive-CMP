@@ -20,6 +20,11 @@ import RiveRuntime
     /// The instance last handed to `onViewModelInstance`.
     private var deliveredViewModelInstance: RiveDataBindingViewModel.Instance?
 
+    /// Called on the main thread with the artboard's width and height, in artboard units, on the
+    /// turn of the run loop after the file has loaded, so it can be set right after
+    /// `setAnimationItem` in the same turn.
+    public var onArtboardSize: ((Double, Double) -> Void)?
+
     override init() {
         super.init()
     }
@@ -49,7 +54,10 @@ import RiveRuntime
             artboardName: artboardName
         )
         // rive-ios builds a new RiveModel once the download finishes, without auto-binding.
-        urlViewModel.onFileLoaded = { [weak self] in self?.enableAutoBindIfRequested() }
+        urlViewModel.onFileLoaded = { [weak self] in
+            self?.enableAutoBindIfRequested()
+            self?.reportArtboardSize()
+        }
         viewModel = urlViewModel
 
         enableAutoBindIfRequested()
@@ -106,6 +114,7 @@ import RiveRuntime
             }
 
             enableAutoBindIfRequested()
+            reportArtboardSize()
 
             // If view was already requested, create it now
             if riveView == nil {
@@ -113,6 +122,17 @@ import RiveRuntime
             }
         } catch {
             print("RiveAnimationController: ERROR - Failed to create RiveFile from data: \(error)")
+        }
+    }
+
+    /// Hands the loaded artboard's bounds to `onArtboardSize` on the next turn of the run loop,
+    /// which keeps the callback out of the caller's current work. Reporting them on load is enough:
+    /// RiveView.drawRive resets the artboard to this size before drawing it with any fit but
+    /// .layout, which RiveFit doesn't offer, so the size it draws doesn't change while playing.
+    private func reportArtboardSize() {
+        guard let bounds = viewModel?.riveModel?.artboard?.bounds() else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.onArtboardSize?(Double(bounds.width), Double(bounds.height))
         }
     }
 
