@@ -198,7 +198,7 @@ fun MyScreen() {
 ```
 
 > [!NOTE]
-> On Desktop (JVM), a `CustomRiveAnimation` without a size modifier takes its artboard's size, one
+> On Desktop (JVM) and iOS, a `CustomRiveAnimation` without a size modifier takes its artboard's size, one
 > artboard unit per dp (per pixel with `RiveFit.NONE`), fitted into the space its parent allows. An
 > explicit size modifier always wins.
 

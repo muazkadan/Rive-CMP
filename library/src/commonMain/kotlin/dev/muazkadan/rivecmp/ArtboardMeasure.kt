@@ -1,8 +1,9 @@
 /**
- * Measurement of the desktop Rive view. It follows rive-android's RiveAnimationView.onMeasure so a
- * CustomRiveAnimation without a size modifier lays out the same on desktop as on Android: the
- * artboard's own size in unbounded dimensions, fitted into the space the parent allows otherwise.
- * Unlike Android, an artboard unit is one dp, so the view keeps its designed size on HiDPI screens.
+ * Measurement of the desktop and iOS Rive views. It follows rive-android's
+ * RiveAnimationView.onMeasure so a CustomRiveAnimation without a size modifier lays out the same as
+ * on Android: the artboard's own size in unbounded dimensions, fitted into the space the parent
+ * allows otherwise. Unlike Android, an artboard unit is one dp, so the view keeps its designed size
+ * on HiDPI screens.
  */
 package dev.muazkadan.rivecmp
 
@@ -10,7 +11,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.constrainWidth
-import dev.muazkadan.rivecmp.native.model.Fit
+import dev.muazkadan.rivecmp.core.RiveFit
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -27,7 +28,7 @@ internal data class ArtboardSize(val width: Float, val height: Float)
 internal fun measureArtboard(
     constraints: Constraints,
     artboard: ArtboardSize,
-    fit: Fit,
+    fit: RiveFit,
     density: Float = 1f,
 ): IntSize {
     val availableWidth = if (constraints.hasBoundedWidth) constraints.maxWidth.toFloat() else artboard.width * density
@@ -43,7 +44,7 @@ internal fun measureArtboard(
 
 /** The space [artboard] covers once scaled into the available space, as rive-runtime's computeAlignment scales it. */
 private fun requiredSize(
-    fit: Fit,
+    fit: RiveFit,
     availableWidth: Float,
     availableHeight: Float,
     artboard: ArtboardSize,
@@ -54,14 +55,13 @@ private fun requiredSize(
     val heightScale = availableHeight / artboard.height
 
     val scale = when (fit) {
-        Fit.FILL -> return ArtboardSize(availableWidth, availableHeight)
-        Fit.CONTAIN -> min(widthScale, heightScale)
-        Fit.COVER -> max(widthScale, heightScale)
-        Fit.FIT_WIDTH -> widthScale
-        Fit.FIT_HEIGHT -> heightScale
-        // NONE draws one artboard unit per pixel whatever the density. RiveFit has no LAYOUT, so
-        // the view never gets it; it is listed only to keep this exhaustive.
-        Fit.NONE, Fit.LAYOUT -> 1f
+        RiveFit.FILL -> return ArtboardSize(availableWidth, availableHeight)
+        RiveFit.CONTAIN -> min(widthScale, heightScale)
+        RiveFit.COVER -> max(widthScale, heightScale)
+        RiveFit.FIT_WIDTH -> widthScale
+        RiveFit.FIT_HEIGHT -> heightScale
+        // NONE draws one artboard unit per pixel whatever the density, on desktop and on iOS.
+        RiveFit.NONE -> 1f
     }
 
     return ArtboardSize(artboard.width * scale, artboard.height * scale)

@@ -92,7 +92,7 @@ actual fun CustomRiveAnimation(
         onDispose { controller.onViewModelInstanceBound = null }
     }
 
-    Spacer(modifier.then(RiveRendererElement(controller, overlay)))
+    Spacer(modifier.then(RiveRendererElement(controller, fit, overlay)))
 }
 
 @ExperimentalRiveCmpApi
@@ -170,13 +170,15 @@ actual fun CustomRiveAnimation(
 
 private data class RiveRendererElement(
     private val controller: RiveFileController,
+    private val fit: RiveFit,
     private val overlay: Boolean,
 ) : ModifierNodeElement<RiveRendererNode>() {
 
-    override fun create(): RiveRendererNode = RiveRendererNode(controller, overlay)
+    override fun create(): RiveRendererNode = RiveRendererNode(controller, fit, overlay)
 
     override fun update(node: RiveRendererNode) {
         node.controller = controller
+        node.fit = fit
         node.overlay = overlay
     }
 }
@@ -190,6 +192,7 @@ private data class RiveRendererElement(
  */
 private class RiveRendererNode(
     controller: RiveFileController,
+    fit: RiveFit,
     overlay: Boolean,
 ) : Modifier.Node(), DrawModifierNode, LayoutAwareModifierNode, LayoutModifierNode {
 
@@ -200,6 +203,13 @@ private class RiveRendererNode(
             artboardSize = null
             invalidateMeasurement()
             bindBuffer()
+        }
+
+    var fit: RiveFit = fit
+        set(value) {
+            if (field == value) return
+            field = value
+            invalidateMeasurement()
         }
 
     var overlay: Boolean = overlay
@@ -220,7 +230,7 @@ private class RiveRendererNode(
         val size = measureArtboard(
             constraints = constraints,
             artboard = artboard,
-            fit = controller.fit,
+            fit = fit,
             density = density,
         )
         val placeable = measurable.measure(Constraints.fixed(size.width, size.height))

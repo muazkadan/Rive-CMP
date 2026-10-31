@@ -3,10 +3,14 @@ package dev.muazkadan.rivecmp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import dev.muazkadan.rivecmp.core.RiveAlignment
@@ -73,11 +77,13 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
+                val artboardSize = rememberArtboardSize(animationController)
+
                 UIKitView(
                     factory = {
                         animationController.createAnimationView()
                     },
-                    modifier = modifier,
+                    modifier = modifier.artboardLayout(artboardSize, fit),
                     update = { view ->
                         animationController.updateView(view)
                     },
@@ -122,11 +128,13 @@ actual fun CustomRiveAnimation(
                     }
                 }
 
+                val artboardSize = rememberArtboardSize(animationController)
+
                 UIKitView(
                     factory = {
                         animationController.createAnimationView()
                     },
-                    modifier = modifier,
+                    modifier = modifier.artboardLayout(artboardSize, fit),
                     update = { view ->
                         animationController.updateView(view)
                     },
@@ -179,11 +187,13 @@ actual fun CustomRiveAnimation(
         }
     }
 
+    val artboardSize = rememberArtboardSize(animationController)
+
     UIKitView(
         factory = {
             animationController.createAnimationView()
         },
-        modifier = modifier,
+        modifier = modifier.artboardLayout(artboardSize, fit),
         update = { view ->
             animationController.updateView(view)
         },
@@ -243,11 +253,13 @@ actual fun CustomRiveAnimation(
         }
     }
 
+    val artboardSize = rememberArtboardSize(animationController)
+
     UIKitView(
         factory = {
             animationController.createAnimationView()
         },
-        modifier = modifier,
+        modifier = modifier.artboardLayout(artboardSize, fit),
         update = { view ->
             animationController.updateView(view)
         },
@@ -285,3 +297,34 @@ private fun MutableList<IosRiveViewModelInstance>.releaseAll() {
     forEach { it.release() }
     clear()
 }
+
+/**
+ * The artboard size [controller] reports once its file has loaded, or null before. The callback is
+ * set here, in the composition that created the controller, before the controller reports the size
+ * on the next turn of the run loop.
+ */
+@OptIn(ExperimentalForeignApi::class)
+@Composable
+private fun rememberArtboardSize(controller: RiveAnimationController): ArtboardSize? {
+    val size = remember(controller) {
+        mutableStateOf<ArtboardSize?>(null).also { state ->
+            controller.onArtboardSize = { width, height ->
+                state.value = ArtboardSize(width.toFloat(), height.toFloat())
+            }
+        }
+    }
+    return size.value
+}
+
+/**
+ * Sizes the view to [artboard] as [measureArtboard] describes, as rive-android's view sizes itself;
+ * before the file has loaded, the view takes the minimum size.
+ */
+private fun Modifier.artboardLayout(artboard: ArtboardSize?, fit: RiveFit): Modifier =
+    layout { measurable, constraints ->
+        val size = artboard
+            ?.let { measureArtboard(constraints, it, fit, density = density) }
+            ?: IntSize(constraints.minWidth, constraints.minHeight)
+        val placeable = measurable.measure(Constraints.fixed(size.width, size.height))
+        layout(size.width, size.height) { placeable.place(0, 0) }
+    }
