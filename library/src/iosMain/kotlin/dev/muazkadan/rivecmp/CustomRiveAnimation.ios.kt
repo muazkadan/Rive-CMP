@@ -299,9 +299,9 @@ private fun MutableList<IosRiveViewModelInstance>.releaseAll() {
 }
 
 /**
- * The artboard size [controller] last reported, from when its file has loaded, or null before. The
- * callback is set here, in the composition that created the controller, before the controller
- * reports the size on a later turn of the run loop.
+ * The artboard size [controller] reports once its file has loaded, or null before. The callback is
+ * set here, in the composition that created the controller, before the controller reports the size
+ * on the next turn of the run loop.
  */
 @OptIn(ExperimentalForeignApi::class)
 @Composable

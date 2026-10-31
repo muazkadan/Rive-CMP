@@ -20,13 +20,10 @@ import RiveRuntime
     /// The instance last handed to `onViewModelInstance`.
     private var deliveredViewModelInstance: RiveDataBindingViewModel.Instance?
 
-    /// Called on the main thread with the artboard's width and height, in artboard units, once the
-    /// file has loaded and again whenever they change. It's called on a later turn of the run loop,
-    /// so it can be set right after `setAnimationItem` in the same turn.
+    /// Called on the main thread with the artboard's width and height, in artboard units, on the
+    /// turn of the run loop after the file has loaded, so it can be set right after
+    /// `setAnimationItem` in the same turn.
     public var onArtboardSize: ((Double, Double) -> Void)?
-
-    /// The artboard size last handed to `onArtboardSize`.
-    private var reportedArtboardSize: CGSize?
 
     override init() {
         super.init()
@@ -47,7 +44,7 @@ import RiveRuntime
         releaseAnimation()
 
         // Create view model with proper configuration
-        let urlViewModel = ReportingRiveViewModel(
+        let urlViewModel = FileLoadReportingRiveViewModel(
             webURL: url,
             stateMachineName: stateMachineName,
             fit: fit,
@@ -61,7 +58,6 @@ import RiveRuntime
             self?.enableAutoBindIfRequested()
             self?.reportArtboardSize()
         }
-        urlViewModel.onAdvance = { [weak self] in self?.reportArtboardSize() }
         viewModel = urlViewModel
 
         enableAutoBindIfRequested()
@@ -97,9 +93,8 @@ import RiveRuntime
             }
 
             // Create RiveViewModel from RiveModel
-            let dataViewModel: ReportingRiveViewModel
             if let stateMachineName = stateMachineName {
-                dataViewModel = ReportingRiveViewModel(
+                viewModel = RiveViewModel(
                     riveModel,
                     stateMachineName: stateMachineName,
                     fit: fit,
@@ -108,7 +103,7 @@ import RiveRuntime
                     artboardName: artboardName
                 )
             } else {
-                dataViewModel = ReportingRiveViewModel(
+                viewModel = RiveViewModel(
                     riveModel,
                     animationName: nil,
                     fit: fit,
@@ -117,8 +112,6 @@ import RiveRuntime
                     artboardName: artboardName
                 )
             }
-            dataViewModel.onAdvance = { [weak self] in self?.reportArtboardSize() }
-            viewModel = dataViewModel
 
             enableAutoBindIfRequested()
             reportArtboardSize()
@@ -132,15 +125,14 @@ import RiveRuntime
         }
     }
 
-    /// Hands the artboard's size to `onArtboardSize` when it differs from the last one reported, on
-    /// the next turn of the run loop, which keeps the callback out of the caller's current work.
-    /// It's checked on every frame as well as on load, as the bounds can change while playing, e.g.
-    /// when reset() instances the artboard again.
+    /// Hands the loaded artboard's bounds to `onArtboardSize` on the next turn of the run loop,
+    /// which keeps the callback out of the caller's current work. Reporting them on load is enough:
+    /// RiveView.drawRive resets the artboard to this size before drawing it with any fit but
+    /// .layout, which RiveFit doesn't offer, so the size it draws doesn't change while playing.
     private func reportArtboardSize() {
-        guard let size = viewModel?.riveModel?.artboard?.bounds().size, size != reportedArtboardSize else { return }
-        reportedArtboardSize = size
+        guard let bounds = viewModel?.riveModel?.artboard?.bounds() else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.onArtboardSize?(Double(size.width), Double(size.height))
+            self?.onArtboardSize?(Double(bounds.width), Double(bounds.height))
         }
     }
 
@@ -213,7 +205,6 @@ import RiveRuntime
         viewModel?.riveModel?.disableAutoBind()
         boundViewModelInstance = nil
         deliveredViewModelInstance = nil
-        reportedArtboardSize = nil
         viewModel = nil
         pendingConfiguration = nil
     }
@@ -249,18 +240,12 @@ import RiveRuntime
     }
 }
 
-/// A RiveViewModel that reports when its downloaded file has loaded and when it has advanced a frame.
-private final class ReportingRiveViewModel: RiveViewModel {
+/// A RiveViewModel that reports when its downloaded file has loaded.
+private final class FileLoadReportingRiveViewModel: RiveViewModel {
     var onFileLoaded: (() -> Void)?
-    var onAdvance: (() -> Void)?
 
     override func riveFileDidLoad(_ riveFile: RiveFile) throws {
         try super.riveFileDidLoad(riveFile)
         onFileLoaded?()
-    }
-
-    override func player(didAdvanceby seconds: Double, riveModel: RiveModel?) {
-        super.player(didAdvanceby: seconds, riveModel: riveModel)
-        onAdvance?()
     }
 }
