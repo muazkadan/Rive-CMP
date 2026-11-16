@@ -6,7 +6,9 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import org.junit.Assume.assumeTrue
 
 /**
  * Checks the copy of the native library that is kept between runs where a loaded library cannot
@@ -54,6 +56,57 @@ class NativeLoaderTest {
         assertNotEquals(copy, otherCopy)
         assertContentEquals(library, copy.readBytes())
         assertContentEquals(other, otherCopy.readBytes())
+    }
+
+    @Test
+    fun keepsTheCopiesInTheUsersApplicationData() {
+        val copies = NativeLoader.reusableCopies(localAppData = "C:\\Users\\ada\\AppData\\Local", userHome = "C:\\Users\\ada")
+
+        assertEquals(File("C:\\Users\\ada\\AppData\\Local", "rive-cmp"), copies)
+    }
+
+    @Test
+    fun keepsTheCopiesInTheHomeDirectoryWithoutApplicationData() {
+        val copies = NativeLoader.reusableCopies(localAppData = null, userHome = "C:\\Users\\ada")
+
+        assertEquals(File("C:\\Users\\ada", "rive-cmp"), copies)
+    }
+
+    @Test
+    fun keepsACopyThatIsLoadedAndCannotBeReplaced() {
+        // Only Windows refuses to replace a library that is loaded, and loading takes a real one
+        assumeTrue(System.getProperty("os.name").startsWith("Windows"))
+        val systemLibrary = File(System.getenv("SystemRoot"), "System32/version.dll").readBytes()
+        val copy = NativeLoader.reusableCopy("version.dll", systemLibrary, root)
+        System.load(copy.absolutePath)
+
+        // What a second process does when it found no copy just before the first one put it there
+        NativeLoader.place(systemLibrary, copy)
+
+        assertContentEquals(systemLibrary, copy.readBytes())
+        assertEquals(listOf("version.dll"), copy.parentFile.list()!!.toList(), "Expected no partial copy")
+    }
+
+    @Test
+    fun failsWithoutLeavingAnythingBehindWhenTheCopyCannotBeWritten() {
+        val copy = NativeLoader.reusableCopy("librive-desktopx64.dll", library, root)
+        // A directory with something in it where the copy belongs cannot be replaced by a file
+        copy.delete()
+        copy.resolve("in the way").apply { parentFile.mkdirs() }.writeText("")
+
+        assertFailsWith<IllegalStateException> {
+            NativeLoader.reusableCopy("librive-desktopx64.dll", library, root)
+        }
+        assertEquals(listOf("librive-desktopx64.dll"), copy.parentFile.list()!!.toList(), "Expected no partial copy")
+    }
+
+    @Test
+    fun failsWhenThereIsNowhereToPutTheCopy() {
+        val notADirectory = root.resolve("a file").apply { writeText("") }
+
+        assertFailsWith<IllegalStateException> {
+            NativeLoader.reusableCopy("librive-desktopx64.dll", library, notADirectory)
+        }
     }
 
     @Test
