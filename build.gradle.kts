@@ -50,6 +50,12 @@ subprojects {
         }
     }
 
+    // Publishing needs a sources jar, and these modules have no sources: left alone, theirs
+    // would be a second copy of the binary
+    tasks.withType<Jar>().matching { it.name == "sourcesJar" }.configureEach {
+        exclude(library)
+    }
+
     extensions.configure<MavenPublishBaseExtension> {
         publishToMavenCentral()
 
