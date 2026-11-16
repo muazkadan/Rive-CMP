@@ -62,6 +62,20 @@ libpng
 libjpeg-turbo
     https://github.com/libjpeg-turbo/libjpeg-turbo
     BSD 3-Clause License and the IJG (Independent JPEG Group) License
+
+libwebp
+    https://chromium.googlesource.com/webm/libwebp
+    BSD 3-Clause License
+    Copyright (c) 2010, Google Inc. All rights reserved.
+
+libgifcodec
+    https://skia.googlesource.com/libgifcodec
+    BSD 3-Clause License
+    Copyright 2019 Google LLC. All rights reserved.
+    Except SkGifImageReader.cpp and SkGifImageReader.h, which are under the
+    Mozilla Public License 1.1 (alternatively the GNU General Public License
+    2.0 or the GNU Lesser General Public License 2.1). Their source code is
+    available at the address above.
 --------------------------------------------------------------------------------
 
 See native/rive-desktop/README.md in the Rive CMP repository for how this
