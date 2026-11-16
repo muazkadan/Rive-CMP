@@ -32,7 +32,8 @@ runtime is linked statically. The Windows libraries link the C runtime staticall
 The [Build native desktop runtime](../../.github/workflows/build-native-desktop.yml) workflow
 builds every platform from a clean checkout, so its steps are the reference for what follows.
 
-Skia first, for the architecture you are building (`arm64` or `x64`):
+All of it is run from the repository root. Skia first, for the architecture you are building
+(`arm64` or `x64`):
 
 ```sh
 git submodule update --init --recursive submodules/rive-runtime
@@ -48,8 +49,8 @@ Then the bridge, which also builds the Rive runtime's static libs:
 
 ```sh
 export JAVA_HOME=<path to a JDK>
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+cmake -S native/rive-desktop -B native/rive-desktop/build -DCMAKE_BUILD_TYPE=Release
+cmake --build native/rive-desktop/build
 ```
 
 On Linux and Windows add `-G Ninja -DCMAKE_CXX_COMPILER=clang++`: Skia and the Rive runtime are
@@ -57,7 +58,7 @@ built with clang there, and so is the bridge. A Mac builds for its other archite
 `-DCMAKE_OSX_ARCHITECTURES=arm64` or `x86_64`. The workflow's "Configure" step has the arguments
 for cross-compiling to Windows arm64.
 
-Produces `build/librive-desktop<arch>.<ext>`.
+Produces `native/rive-desktop/build/librive-desktop<arch>.<ext>`.
 
 What each platform needs installed:
 
