@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       upload_only:
-        description: "Build and upload the artifact without failing on checksum drift"
+        description: "Build and upload the artifacts without failing on checksum drift"
         type: boolean
         default: false
   push:
@@ -19,12 +19,37 @@ on:
 
 jobs:
   build:
-    # macOS 14 runners are arm64 (matching the shipped librive-desktoparm64.dylib)
-    # and ship an older Xcode/SDK. The Skia checkout pinned by rive-runtime vendors
-    # a zlib whose `#define fdopen(fd,mode) NULL` breaks against the macOS 15.5 SDK's
-    # own fdopen declaration, so the newer image cannot build it.
-    runs-on: macos-14
+    name: ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # `tested` says whether the runner can load what it builds. The arm64 libraries
+          # for macOS and Windows are cross-compiled on x64 runners, so the test-cross-built
+          # job below tests them on arm64 ones. For macOS that is because GitHub's arm64
+          # Macs often fail to start (actions/runner-images#15291), which must not keep the
+          # library from being built; either Mac can build both architectures.
+          - { os: macos, arch: arm64, runner: macos-26-intel, library: librive-desktoparm64.dylib, tested: false }
+          - { os: macos, arch: x64, runner: macos-26-intel, library: librive-desktopx64.dylib, tested: true }
+          - { os: linux, arch: x64, runner: ubuntu-22.04, library: librive-desktopx64.so, tested: true }
+          - { os: linux, arch: arm64, runner: ubuntu-22.04-arm, library: librive-desktoparm64.so, tested: true }
+          - { os: windows, arch: x64, runner: windows-2022, library: librive-desktopx64.dll, tested: true }
+          - { os: windows, arch: arm64, runner: windows-2022, library: librive-desktoparm64.dll, tested: false }
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      SKIA_DIR: submodules/rive-runtime/skia/dependencies/skia
+      # Where Skia's build output lands, named the way CMakeLists.txt looks for it
+      SKIA_OUT: ${{ matrix.os == 'macos' && 'macosx' || matrix.os }}/${{ matrix.arch }}
+      COMMITTED_LIBRARY: runtime-${{ matrix.os }}-${{ matrix.arch }}/src/main/resources/${{ matrix.library }}
+      # macOS has no sha256sum, and Git Bash on Windows no shasum
+      SHA256: ${{ matrix.os == 'macos' && 'shasum -a 256' || 'sha256sum' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -38,19 +63,56 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 24
+          # The newest long-term-support release Temurin builds for Windows arm64 as well
+          java-version: 21
+
+      # The Skia and Rive build scripts call `python`, which not every runner has
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Report the active toolchain
         run: |
-          echo "Available Xcode versions:"
-          ls -d /Applications/Xcode*.app 2>/dev/null || true
-          xcodebuild -version || true
-          xcrun --show-sdk-version || true
+          if [ "${{ matrix.os }}" = "macos" ]; then
+            echo "Available Xcode versions:"
+            ls -d /Applications/Xcode*.app 2>/dev/null || true
+            xcodebuild -version || true
+            xcrun --show-sdk-version || true
+          else
+            clang --version || true
+            python --version
+          fi
+          cmake --version
 
-      - name: Install native build tools
-        run: brew install ninja premake
+      - name: Install native build tools (macOS)
+        if: matrix.os == 'macos'
+        run: |
+          brew install ninja premake
+          # The Rive renderer's shader build compiles Metal shaders, and Xcode 26 and
+          # later leave the Metal compiler to a separate download
+          xcrun -sdk macosx metal --version || xcodebuild -downloadComponent MetalToolchain
 
-      - name: Match the Skia flags the shipped binary was built with
+      - name: Install native build tools (Linux)
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          # uuid-dev is for Premake, which build_rive.sh builds from source. The rest of
+          # the list after clang is what Skiko, not this library, needs to load in the tests.
+          sudo apt-get install -y ninja-build clang uuid-dev libgl1 libegl1 libx11-6 libfontconfig1
+
+      - name: Install native build tools (Windows)
+        if: matrix.os == 'windows'
+        run: |
+          command -v ninja || choco install ninja --no-progress -y
+          command -v make || choco install make --no-progress -y
+          # The Rive renderer's shader build compiles HLSL with fxc, which the Windows
+          # SDK installs but does not put on PATH
+          FXC=$(ls "/c/Program Files (x86)/Windows Kits/10/bin/"*/x64/fxc.exe | sort -V | tail -n 1)
+          echo "fxc: $FXC"
+          cygpath -w "$(dirname "$FXC")" >> "$GITHUB_PATH"
+
+      - name: Patch the Skia build flags
+        if: matrix.os == 'macos'
         working-directory: submodules/rive-runtime/skia/dependencies
         run: |
           # The pinned rive-runtime's make_skia_macos.sh adds three flags to
@@ -64,10 +126,20 @@ jobs:
           if grep -qE '\\"-flto=full\\"' make_skia_macos.sh; then
             echo "::error::flag patch did not apply"; exit 1
           fi
+          # The Skia this pins is from 2022, and two libraries it vendors take Classic
+          # Mac OS code paths once a current macOS SDK defines TARGET_OS_MAC for them:
+          # zlib defines fdopen away, which then mangles the SDK's own declaration of
+          # it, and libpng includes <fp.h>, which no longer exists. Defining fdopen as
+          # itself and including <math.h> first keeps both off those paths.
+          perl -pi -e 's/^(\s*)(\\"-fno-rtti\\",)/$1$2 \\"-Dfdopen=fdopen\\", \\"-include\\", \\"math.h\\",/' make_skia_macos.sh
+          if ! grep -qE '\\"-Dfdopen=fdopen\\", \\"-include\\", \\"math.h\\",' make_skia_macos.sh; then
+            echo "::error::SDK flag patch did not apply"; exit 1
+          fi
           echo "--- SHARED_EXTRA_CFLAGS after patch ---"
           sed -n '/SHARED_EXTRA_CFLAGS=/,/^    "$/p' make_skia_macos.sh
 
-      - name: Build Skia for arm64
+      - name: Build Skia (macOS)
+        if: matrix.os == 'macos'
         working-directory: submodules/rive-runtime/skia/dependencies
         run: |
           # make_skia_macos.sh finishes by uploading its build cache to Rive's own
@@ -75,23 +147,41 @@ jobs:
           # That upload exits non-zero and would fail the step even though the
           # build succeeded, so ignore the script's status and assert on the
           # artifact CMakeLists.txt actually links against instead.
-          ./make_skia_macos.sh arm64 || echo "make_skia_macos.sh exited non-zero (expected: S3 cache upload)"
-          test -f skia/out/macosx/arm64/libskia.a
-          ls -lh skia/out/macosx/arm64/libskia.a
+          ./make_skia_macos.sh ${{ matrix.arch }} || echo "make_skia_macos.sh exited non-zero (expected: S3 cache upload)"
+
+      - name: Build Skia (Linux, Windows)
+        if: matrix.os != 'macos'
+        run: native/rive-desktop/make_skia.sh ${{ matrix.arch }}
+
+      - name: Show the Skia build
+        run: |
+          ls -lh "$SKIA_DIR/out/$SKIA_OUT"/*skia.*
           echo "--- gn args actually used ---"
-          cat skia/out/macosx/arm64/args.gn
+          cat "$SKIA_DIR/out/$SKIA_OUT/args.gn"
 
       - name: Configure
-        run: cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release
+        run: |
+          case "${{ matrix.os }}-${{ matrix.arch }}" in
+            macos-arm64) PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=arm64) ;;
+            macos-x64) PLATFORM_ARGS=(-DCMAKE_OSX_ARCHITECTURES=x86_64) ;;
+            linux-*) PLATFORM_ARGS=(-G Ninja -DCMAKE_CXX_COMPILER=clang++) ;;
+            windows-x64) PLATFORM_ARGS=(-G Ninja -DCMAKE_CXX_COMPILER=clang++) ;;
+            windows-arm64)
+              PLATFORM_ARGS=(-G Ninja -DCMAKE_CXX_COMPILER=clang++
+                -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=ARM64
+                -DCMAKE_CXX_COMPILER_TARGET=aarch64-pc-windows-msvc) ;;
+          esac
+          cmake -B native/rive-desktop/build -S native/rive-desktop -DCMAKE_BUILD_TYPE=Release "${PLATFORM_ARGS[@]}"
 
       - name: Locate the static libs Premake produced
+        if: always()
         run: |
-          # CMake links against native/rive-desktop/out/<arch>_<config>/lib*.a.
-          # Show where build_rive.sh actually wrote them so a path mismatch is
-          # diagnosable from the log rather than by guesswork.
-          find submodules/rive-runtime native/rive-desktop -name 'librive*.a' 2>/dev/null | head -40 || true
+          # CMake links against native/rive-desktop/out/<arch>_<config>/. Show where
+          # build_rive.sh actually wrote the libs so a path mismatch is diagnosable
+          # from the log rather than by guesswork.
+          find native/rive-desktop/out -maxdepth 2 \( -name '*.a' -o -name '*.lib' \) 2>/dev/null | head -40 || true
           echo "--- expected by CMake ---"
-          ls -la native/rive-desktop/out/arm64_release/ 2>/dev/null || echo "(missing)"
+          ls -la native/rive-desktop/out/${{ matrix.arch }}_release/ 2>/dev/null || echo "(missing)"
 
       - name: Build
         run: cmake --build native/rive-desktop/build
@@ -99,37 +189,111 @@ jobs:
       - name: Fingerprint the freshly built binary
         id: fingerprint
         run: |
-          BIN=$(find native/rive-desktop/build -name 'librive-desktoparm64.dylib' | head -1)
+          BIN=$(find native/rive-desktop/build -name '${{ matrix.library }}' | head -1)
           echo "Built: $BIN"
-          shasum -a 256 "$BIN" | tee built.sha256
+          test -n "$BIN"
+          $SHA256 "$BIN" | tee built.sha256
           echo "path=$BIN" >> "$GITHUB_OUTPUT"
 
-      - name: Run the JNI smoke test against the freshly built binary
+      - name: Show what the binary needs from the system
         run: |
-          cp "${{ steps.fingerprint.outputs.path }}" \
-             runtime-macos-arm64/src/main/resources/librive-desktoparm64.dylib
+          case "${{ matrix.os }}" in
+            macos) otool -L "${{ steps.fingerprint.outputs.path }}" ;;
+            linux)
+              objdump -p "${{ steps.fingerprint.outputs.path }}" | grep NEEDED
+              echo "--- newest glibc symbol version referenced ---"
+              objdump -T "${{ steps.fingerprint.outputs.path }}" | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tail -1
+              ;;
+            windows) llvm-objdump -p "${{ steps.fingerprint.outputs.path }}" | grep "DLL Name" ;;
+          esac
+
+      - name: Run the JVM tests against the freshly built binary
+        if: matrix.tested
+        run: |
+          mkdir -p "$(dirname "$COMMITTED_LIBRARY")"
+          cp "${{ steps.fingerprint.outputs.path }}" "$COMMITTED_LIBRARY"
           ./gradlew :library:jvmTest --rerun-tasks
 
       - name: Compare against the committed binary
         if: ${{ !inputs.upload_only }}
         run: |
-          # The committed dylib predates the pin and is not expected to match yet.
-          # Once it has been replaced by an artifact from this workflow, a mismatch
-          # here means the pinned commit or the bridge changed without the binary
-          # and its checksum in native/rive-desktop/README.md being updated.
-          COMMITTED=$(git show HEAD:runtime-macos-arm64/src/main/resources/librive-desktoparm64.dylib | shasum -a 256 | cut -d' ' -f1)
+          # A mismatch here means the pinned commit or the bridge changed without the
+          # binary and its checksum in native/rive-desktop/README.md being updated.
+          COMMITTED=$(git show "HEAD:$COMMITTED_LIBRARY" | $SHA256 | cut -d' ' -f1)
           BUILT=$(cut -d' ' -f1 < built.sha256)
           echo "committed: $COMMITTED"
           echo "built:     $BUILT"
           if [ "$COMMITTED" != "$BUILT" ]; then
-            echo "::warning::Built binary differs from the committed one. If this is the first authoritative build, replace the committed dylib with this artifact and update the checksum in native/rive-desktop/README.md."
+            echo "::warning::Built ${{ matrix.library }} differs from the committed one. Replace the committed binary with this artifact and update its checksum in native/rive-desktop/README.md."
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: librive-desktoparm64
+          name: rive-desktop-${{ matrix.os }}-${{ matrix.arch }}
           path: |
             ${{ steps.fingerprint.outputs.path }}
             built.sha256
             pinned-rive-runtime.txt
           if-no-files-found: error
+
+      - name: Upload the test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            library/build/reports/tests/jvmTest
+            library/build/test-results/jvmTest
+            library/hs_err_pid*.log
+          if-no-files-found: ignore
+
+  test-cross-built:
+    name: test ${{ matrix.os }}-${{ matrix.arch }}
+    needs: build
+    # Whatever happened to the other platforms' builds
+    if: ${{ !cancelled() }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos, arch: arm64, runner: macos-26, library: librive-desktoparm64.dylib }
+          - { os: windows, arch: arm64, runner: windows-11-arm, library: librive-desktoparm64.dll }
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # The newest long-term-support release Temurin builds for Windows arm64 as well
+          java-version: 21
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: rive-desktop-${{ matrix.os }}-${{ matrix.arch }}
+          path: built
+
+      - name: Run the JVM tests against the freshly built binary
+        run: |
+          BIN=$(find built -name '${{ matrix.library }}' | head -1)
+          mkdir -p runtime-${{ matrix.os }}-${{ matrix.arch }}/src/main/resources
+          cp "$BIN" runtime-${{ matrix.os }}-${{ matrix.arch }}/src/main/resources/
+          ./gradlew :library:jvmTest --rerun-tasks
+
+      - name: Upload the test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            library/build/reports/tests/jvmTest
+            library/build/test-results/jvmTest
+            library/hs_err_pid*.log
+          if-no-files-found: ignore
