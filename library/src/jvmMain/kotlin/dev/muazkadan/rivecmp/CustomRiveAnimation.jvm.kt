@@ -28,6 +28,7 @@ import dev.muazkadan.rivecmp.core.toJvmAlignment
 import dev.muazkadan.rivecmp.core.toJvmFit
 import dev.muazkadan.rivecmp.native.RiveFileController
 import dev.muazkadan.rivecmp.native.ViewModelInstance
+import dev.muazkadan.rivecmp.native.model.PixelFormat
 import dev.muazkadan.rivecmp.utils.ExperimentalRiveCmpApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -252,6 +253,8 @@ private class RiveRendererNode(
             BufferUtil.getByteBufferFromPointer(pixels.addr, bitmap.rowBytes * bitmap.height),
             bitmap.width,
             bitmap.height,
+            bitmap.rowBytes,
+            bitmap.pixelFormat,
         )
     }
 
@@ -298,3 +301,11 @@ private class RiveRendererNode(
         }
     }
 }
+
+/** The byte order of the bitmap's pixels, as the native renderer has to be told it. */
+private val Bitmap.pixelFormat: PixelFormat
+    get() = when (val colorType = colorType) {
+        ColorType.RGBA_8888 -> PixelFormat.RGBA_8888
+        ColorType.BGRA_8888 -> PixelFormat.BGRA_8888
+        else -> error("The native renderer cannot draw into a $colorType bitmap")
+    }

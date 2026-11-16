@@ -21,14 +21,17 @@ public:
     [[nodiscard]] bool isBound() const { return m_Canvas != nullptr; }
 
 
-    void bind(void *pixels, int width, int height) {
-        SkImageInfo info = SkImageInfo::MakeN32Premul(width, height);
-        m_Canvas = SkCanvas::MakeRasterDirect(info, pixels, width * 4);
+    // The caller owns the pixels and states their layout: Skia's "native"
+    // colour type is a per-build alias, so it need not be the caller's.
+    void bind(void *pixels, int width, int height, size_t rowBytes, SkColorType colorType) {
+        SkImageInfo info = SkImageInfo::Make(width, height, colorType, kPremul_SkAlphaType);
+        m_Canvas = SkCanvas::MakeRasterDirect(info, pixels, rowBytes);
         if (!m_Canvas)
             rive_desktop::RiveLogE("RiveN/CanvasRenderer",
-                                   "MakeRasterDirect failed (%dx%d)",
+                                   "MakeRasterDirect failed (%dx%d, %zu bytes per row)",
                                    width,
-                                   height);
+                                   height,
+                                   rowBytes);
         m_width = width;
         m_height = height;
     }

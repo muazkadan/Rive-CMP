@@ -50,10 +50,11 @@ Android, iOS, Web, and Desktop platforms.
 > **The iOS simulator on Intel Macs is not supported as of 0.4.1.** Compose Multiplatform stopped
 > publishing an `iosX64` variant in 1.11. Stay on `0.4.0` if you need the Intel simulator.
 
-**Desktop (JVM) is currently macOS arm64 only.** There is no official Rive SDK for JVM/Desktop,
-so this bridges directly to the C++ [rive-runtime](https://github.com/rive-app/rive-runtime) via
-JNI, rendering through Skia's CPU rasterizer. Linux, Windows, and macOS x64 have the CMake build
-logic in place (`native/rive-desktop/`) but aren't built/verified yet - contributions welcome.
+**Desktop (JVM) runs on macOS, Linux and Windows, on x64 and arm64.** There is no official Rive
+SDK for JVM/Desktop, so this bridges directly to the C++
+[rive-runtime](https://github.com/rive-app/rive-runtime) via JNI, rendering through Skia's CPU
+rasterizer. The native library for each of the six platforms is built from
+[`native/rive-desktop/`](native/rive-desktop/) and comes with the dependency.
 
 ## Installation
 
@@ -410,22 +411,34 @@ LaunchedEffect(rating) {
 
 ### Desktop (JVM)
 
-- macOS arm64 only
+- macOS 11+, Linux with glibc 2.35+ (Ubuntu 22.04, Debian 12, Fedora 36 and later) or Windows 10+,
+  on x64 or arm64
 - JDK 11+
+
+The library depends on the native runtime of all six platforms, 3 to 4 MB of jar each, so an
+application runs wherever it is started. To ship only some of them, exclude the others by their
+module name, `rive-cmp-runtime-<os>-<arch>`:
+
+```kotlin
+configurations.configureEach {
+    exclude(group = "dev.muazkadan", module = "rive-cmp-runtime-windows-arm64")
+}
+```
 
 ## Building
 
-The project has four Gradle modules:
+The project has these Gradle modules:
 
 - **`library`** – The Rive CMP library (KMP: Android, iOS, JS, Wasm, JVM/Desktop)
 - **`sample`** – Shared sample UI and logic (KMP library; also the Desktop, JS and Wasm entry point)
 - **`androidSample`** – Android app entry point (run this for the Android sample)
-- **`runtime-macos-arm64`** – Ships the prebuilt `librive-desktoparm64.dylib` for JVM/Desktop
+- **`runtime-<os>-<arch>`** – One per desktop platform (`macos`, `linux` and `windows`, each for
+  `x64` and `arm64`), shipping the prebuilt `librive-desktop<arch>` native library for JVM/Desktop
 
 plus **`native/rive-desktop/`**, a CMake project for the JNI bridge. It is *not* part of the default
-Gradle build - `:library:jvmMain` consumes the prebuilt binary instead. See
+Gradle build - `:library:jvmMain` consumes the prebuilt binaries instead. See
 [`native/rive-desktop/README.md`](native/rive-desktop/README.md) for how to build it, the pinned
-`rive-runtime` commit, and the provenance of the shipped binary.
+`rive-runtime` commit, and the provenance of the shipped binaries.
 
 The library uses Kotlin Multiplatform with the following plugins:
 
@@ -484,19 +497,20 @@ To run the sample in Android Studio, use the **androidSample** run configuration
    git submodule update --init --recursive submodules/rive-runtime
    ```
 
-   This is not needed for normal development - the JVM target uses the prebuilt binary in
-   `runtime-macos-arm64`. The checkout and its Skia build are large (several GB).
+   This is not needed for normal development - the JVM target uses the prebuilt binaries in the
+   `runtime-<os>-<arch>` modules. The checkout and its Skia build are large (several GB).
 
 ### Tests
 
 The desktop (JVM) tests exercise the JNI bridge, layout, rendering and data binding against the
-committed native binary, so they need an Apple Silicon Mac:
+committed native binary for the machine they run on:
 
 ```bash
 ./gradlew :library:jvmTest
 ```
 
-The [JVM tests](.github/workflows/jvm-tests.yml) workflow runs them on every pull request.
+The [JVM tests](.github/workflows/jvm-tests.yml) workflow runs them on every pull request, on each
+of the six desktop platforms.
 
 ## License
 

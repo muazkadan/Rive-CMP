@@ -1,7 +1,7 @@
 name: JVM tests
 
-# Runs the desktop (JVM) tests against the committed librive-desktoparm64.dylib on every PR and
-# push to main. Unlike the native build, it doesn't build Skia, so it takes minutes.
+# Runs the desktop (JVM) tests against the committed native binaries on every PR and push to
+# main. Unlike the native build, it doesn't build Skia, so it takes minutes.
 on:
   pull_request:
   push:
@@ -14,9 +14,25 @@ concurrency:
 
 jobs:
   jvm-tests:
-    # The shipped desktop runtime is macOS arm64 only, so the tests need an arm64 Mac.
-    runs-on: macos-14
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # One runner per platform a native runtime is shipped for: each loads its own binary
+        include:
+          - { platform: macos-arm64, runner: macos-latest }
+          - { platform: macos-x64, runner: macos-26-intel }
+          - { platform: linux-x64, runner: ubuntu-latest }
+          - { platform: linux-arm64, runner: ubuntu-24.04-arm }
+          - { platform: windows-x64, runner: windows-latest }
+          - { platform: windows-arm64, runner: windows-11-arm }
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v4
@@ -24,9 +40,16 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 24
+          # The newest long-term-support release Temurin builds for Windows arm64 as well
+          java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install the libraries Skiko links against
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1 libegl1 libx11-6 libfontconfig1
 
       - name: Run the JVM tests
         run: ./gradlew :library:jvmTest
@@ -35,8 +58,9 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: jvm-test-reports
+          name: jvm-test-reports-${{ matrix.platform }}
           path: |
             library/build/reports/tests/jvmTest
             library/build/test-results/jvmTest
+            library/hs_err_pid*.log
           if-no-files-found: ignore

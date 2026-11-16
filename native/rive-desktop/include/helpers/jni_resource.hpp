@@ -1,6 +1,8 @@
 #pragma once
 
 #include <jni.h>
+#include <cstdint>
+#include <string>
 #include <vector>
 
 namespace rive_desktop

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.toPixelMap
@@ -32,6 +33,12 @@ class CustomRiveAnimationLayoutTest {
     private val bytes = requireNotNull(javaClass.classLoader.getResource("mode_switch.riv")) {
         "Test asset 'mode_switch.riv' not found in resources"
     }.readBytes()
+
+    /** A 500 x 500 artboard: a red square in the middle and a blue one in the top left corner. */
+    private val redAndBlueSquares =
+        requireNotNull(javaClass.classLoader.getResource("data_binding_test_triggers.riv")) {
+            "Test asset 'data_binding_test_triggers.riv' not found in resources"
+        }.readBytes()
 
     @Test
     fun fitsTheArtboardIntoALooseParent() = runComposeUiTest {
@@ -99,6 +106,31 @@ class CustomRiveAnimationLayoutTest {
         val pixels = onNodeWithTag(TAG).captureToImage().toPixelMap()
         val drawn = (0 until pixels.width).any { x -> (0 until pixels.height).any { y -> pixels[x, y].alpha > 0f } }
         assertTrue(drawn, "Expected the artboard to draw at least one visible pixel")
+    }
+
+    @Test
+    fun drawsTheArtboardInItsOwnColours() = runComposeUiTest {
+        RiveDesktop.init()
+        // The view requests a frame every frame, so it never goes idle on its own
+        mainClock.autoAdvance = false
+
+        setContent {
+            CompositionLocalProvider(LocalDensity provides Density(1f)) {
+                Box(Modifier.size(500.dp, 500.dp)) {
+                    CustomRiveAnimation(modifier = Modifier.testTag(TAG), byteArray = redAndBlueSquares)
+                }
+            }
+        }
+        waitUntil(timeoutMillis = 5_000) {
+            mainClock.advanceTimeByFrame()
+            onAllNodesWithTag(TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        repeat(10) { mainClock.advanceTimeByFrame() }
+
+        // Red and blue transposed means the view and the native renderer disagree on the byte order
+        val pixels = onNodeWithTag(TAG).captureToImage().toPixelMap()
+        assertEquals(Color(255, 0, 0), pixels[250, 250], "The red square")
+        assertEquals(Color(50, 0, 255), pixels[50, 50], "The blue square")
     }
 
     private companion object {
