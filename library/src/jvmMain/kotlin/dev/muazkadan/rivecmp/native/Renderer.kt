@@ -70,6 +70,9 @@ public abstract class Renderer : NativeObject(NULL_POINTER) {
         require(rowBytes >= width * BYTES_PER_PIXEL) {
             "A row of $rowBytes bytes cannot hold $width pixels"
         }
+        require(rowBytes % BYTES_PER_PIXEL == 0) {
+            "A row of $rowBytes bytes is not a whole number of $BYTES_PER_PIXEL-byte pixels"
+        }
         val requiredBytes = rowBytes.toLong() * (height - 1) + width.toLong() * BYTES_PER_PIXEL
         require(buffer.capacity() >= requiredBytes) {
             "A buffer of ${buffer.capacity()} bytes cannot hold $height rows of $rowBytes bytes"

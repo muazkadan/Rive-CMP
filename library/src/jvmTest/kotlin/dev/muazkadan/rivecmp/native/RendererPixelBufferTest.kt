@@ -88,6 +88,16 @@ class RendererPixelBufferTest {
     }
 
     @Test
+    fun rejectsARowThatIsNotAWholeNumberOfPixels() {
+        val rowBytes = TIGHT_ROW_BYTES + 2
+        val buffer = ByteBuffer.allocateDirect(rowBytes * SIZE)
+
+        assertFailsWith<IllegalArgumentException> {
+            controller.artboardRenderer.setBuffer(buffer, SIZE, SIZE, rowBytes, PixelFormat.RGBA_8888)
+        }
+    }
+
+    @Test
     fun rejectsABufferTooSmallForItsRows() {
         val buffer = ByteBuffer.allocateDirect(TIGHT_ROW_BYTES * SIZE - 1)
 
