@@ -87,8 +87,8 @@ public object NativeLoader {
         File(localAppData ?: userHome, "rive-cmp")
 
     /**
-     * Puts [library] at [copy]. It is written aside and moved into place, so another process
-     * never loads half a library.
+     * Puts [library] at [copy]. It is written aside and moved into place in one step, so another
+     * process finds either a whole library there or none, and one that is there stays there.
      *
      * A process that started at the same time may get there first and have its copy loaded,
      * after which it cannot be replaced. That copy is as good, so only a [copy] that ends up
@@ -101,7 +101,7 @@ public object NativeLoader {
             copy.parentFile.mkdirs()
             partial = Files.createTempFile(copy.parentFile.toPath(), copy.name, ".partial")
             Files.write(partial, library)
-            Files.move(partial, copy.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Files.move(partial, copy.toPath(), StandardCopyOption.ATOMIC_MOVE)
         } catch (e: IOException) {
             if (!copy.holds(library)) {
                 throw IllegalStateException("Could not write the native library to '$copy'", e)
