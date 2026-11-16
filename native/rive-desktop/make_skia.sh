@@ -112,7 +112,7 @@ OUT="out/$OS/$ARCH"
 
 # The defines are the ones CMakeLists.txt gives the bridge: they change the
 # layout of Skia's classes, so both sides must be compiled with the same set.
-# Everything else matches SHARED_ARGS in make_skia_macos.sh.
+# The rest is SHARED_ARGS of make_skia_macos.sh, without Metal and code signing.
 bin/gn gen "$OUT" --args='
     target_cpu="'"$ARCH"'"
     extra_cflags=[

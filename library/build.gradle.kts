@@ -111,7 +111,14 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
+            // Every platform's native runtime, so the published library runs wherever it is
+            // resolved; NativeLoader loads the one for the host.
             runtimeOnly(project(":runtime-macos-arm64"))
+            runtimeOnly(project(":runtime-macos-x64"))
+            runtimeOnly(project(":runtime-linux-x64"))
+            runtimeOnly(project(":runtime-linux-arm64"))
+            runtimeOnly(project(":runtime-windows-x64"))
+            runtimeOnly(project(":runtime-windows-arm64"))
         }
 
         jvmTest.dependencies {
