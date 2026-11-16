@@ -25,3 +25,19 @@ do
         'luau_vm',
     })
 end
+
+-- rive-runtime's build scripts take the host's architecture for granted on
+-- Windows, so an arm64 build has to name its target itself.
+workspace('rive')
+filter({ 'system:windows', 'options:arch=arm64' })
+do
+    buildoptions({ '--target=aarch64-pc-windows-msvc' })
+end
+filter({})
+
+-- Without link-time optimization Premake archives with plain `ar`, which on
+-- Windows is MinGW's and cannot index the arm64 objects clang produces: the
+-- linker then finds none of their symbols. LLVM's own archiver can.
+if os.target() == 'windows' then
+    premake.tools.clang.tools.ar = 'llvm-ar'
+end

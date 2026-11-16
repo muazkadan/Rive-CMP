@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.18.1)
 
+# The oldest macOS the library loads on, which is the one rive-runtime builds
+# its static libs for. Left unset, it would be the macOS version of whatever
+# SDK the library happened to be built with.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
+
 project(rive-desktop VERSION 1.0.0 LANGUAGES CXX)
 
 # Compile detail will be in rive-desktop/kotlin/.cxx/Debug/<hash>/<ABI>/compile_commands.json
@@ -46,7 +51,8 @@ target_compile_definitions(rive-desktop PRIVATE
         YOGA_EXPORT=
         $<$<CONFIG:Debug>:DEBUG>)
 
-# Skia is built by make_skia_macos.sh with these exact flags (SHARED_EXTRA_CFLAGS).
+# Skia is built by make_skia_macos.sh (macOS) or make_skia.sh (Linux, Windows)
+# with these exact flags (SHARED_EXTRA_CFLAGS).
 # They change SkCanvas/SkPaint object layout, so every TU that includes Skia
 # headers MUST define the same set - otherwise construction and use disagree on
 # member offsets and crash at runtime (see canvas_factory.cpp's SK_DISABLE_TEXT guard).
@@ -58,6 +64,27 @@ target_compile_definitions(rive-desktop PRIVATE
         SK_FORCE_RASTER_PIPELINE_BLITTER
         SK_DISABLE_AAA
         SK_DISABLE_EFFECT_DESERIALIZATION)
+
+# Skia's own build also defines these for everything that includes its headers
+# (the skia_public config in its BUILD.gn), per platform.
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Makes Skia's native 32-bit colour type BGRA on Linux
+    target_compile_definitions(rive-desktop PRIVATE SK_R32_SHIFT=16)
+endif ()
+
+if (WIN32)
+    # What rive-runtime's build defines for Windows code that includes its
+    # headers
+    target_compile_definitions(rive-desktop PRIVATE
+            NOMINMAX
+            _USE_MATH_DEFINES)
+    # Skia and the Rive runtime both link the static C runtime (/MT)
+    set_target_properties(rive-desktop PROPERTIES
+            MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    # Stamp the library with a hash of its content instead of the link time,
+    # so the same sources give the same file
+    target_link_options(rive-desktop PRIVATE -Wl,/Brepro)
+endif ()
 
 # Configure for monorepo vs. rive-desktop repo
 if (EXISTS "${PROJECT_SOURCE_DIR}/../../submodules/rive-runtime")
@@ -133,25 +160,46 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "Release" OR
 endif ()
 
 # Translate CMake processor ABI to Rive architecture
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64")
+# A Mac builds for its other architecture with CMAKE_OSX_ARCHITECTURES, which
+# leaves CMAKE_SYSTEM_PROCESSOR naming the host.
+if (APPLE AND CMAKE_OSX_ARCHITECTURES)
+    set(TARGET_PROCESSOR "${CMAKE_OSX_ARCHITECTURES}")
+else ()
+    set(TARGET_PROCESSOR "${CMAKE_SYSTEM_PROCESSOR}")
+endif ()
+if (TARGET_PROCESSOR MATCHES "x86_64" OR TARGET_PROCESSOR MATCHES "AMD64")
     set(RIVE_ARCH "x64")
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "i[3-6]86")
+elseif (TARGET_PROCESSOR MATCHES "i[3-6]86")
     set(RIVE_ARCH "x86")
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+elseif (TARGET_PROCESSOR MATCHES "arm64" OR TARGET_PROCESSOR MATCHES "ARM64" OR TARGET_PROCESSOR MATCHES "aarch64")
     set(RIVE_ARCH "arm64")
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+elseif (TARGET_PROCESSOR MATCHES "arm")
     set(RIVE_ARCH "arm")
 else ()
-    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+    message(FATAL_ERROR "Unsupported architecture: ${TARGET_PROCESSOR}")
 endif ()
 
+# The Kotlin loader looks for lib<name><arch>.<ext> on every platform, so keep
+# the prefix where the toolchain would drop it (Windows).
 set_target_properties(rive-desktop PROPERTIES
+        PREFIX "lib"
         OUTPUT_NAME "rive-desktop${RIVE_ARCH}"
 )
 
+# The static libs go into a shared library, so outside macOS, where all code is
+# position-independent, they have to be built as such. Link-time optimization
+# is left to macOS: elsewhere it ties the static libs to one linker.
+if (APPLE)
+    set(RIVE_PLATFORM_ARGS "")
+elseif (WIN32)
+    set(RIVE_PLATFORM_ARGS --no-lto)
+else ()
+    set(RIVE_PLATFORM_ARGS --with-pic --no-lto)
+endif ()
+
 # Build the Rive C++ runtime and its dependencies as static .a libs
 execute_process(
-        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} -- rive_cpp_runtime rive_pls_renderer
+        COMMAND bash ${RIVE_RUNTIME_DIR}/build/build_rive.sh --file=premake5_cpp_runtime.lua ninja ${CONFIG} ${RIVE_ARCH} --no-rive-decoders --with_rive_audio=${RIVE_AUDIO_ARG} ${RIVE_SCRIPTING_ARG} ${RIVE_ASAN_FLAG} ${RIVE_PLATFORM_ARGS} -- rive_cpp_runtime rive_pls_renderer
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         RESULT_VARIABLE SCRIPT_RESULT
         OUTPUT_VARIABLE SCRIPT_OUTPUT
@@ -173,20 +221,28 @@ target_include_directories(rive-desktop PUBLIC
 foreach (X IN LISTS static_libs)
     set(LIB_TARGET "${X}-lib")
     add_library(${LIB_TARGET} STATIC IMPORTED)
-    # Find the .a outputs from Premake
+    # Find the static lib outputs from Premake
     set_target_properties(${LIB_TARGET}
             PROPERTIES IMPORTED_LOCATION
-            ${CMAKE_CURRENT_SOURCE_DIR}/out/${RIVE_ARCH}_${CONFIG}/lib${X}.a
+            ${CMAKE_CURRENT_SOURCE_DIR}/out/${RIVE_ARCH}_${CONFIG}/${CMAKE_STATIC_LIBRARY_PREFIX}${X}${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
     # Link
     target_link_libraries(rive-desktop ${LIB_TARGET})
 endforeach ()
 
 # Link Skia - the same checkout the include path points at, built by
-# ${RIVE_RUNTIME_DIR}/skia/dependencies/make_skia_macos.sh <arch>
+# ${RIVE_RUNTIME_DIR}/skia/dependencies/make_skia_macos.sh <arch> on macOS and
+# by make_skia.sh <arch> in this directory on Linux and Windows
+if (APPLE)
+    set(SKIA_OS "macosx")
+elseif (WIN32)
+    set(SKIA_OS "windows")
+else ()
+    set(SKIA_OS "linux")
+endif ()
 add_library(skia-lib STATIC IMPORTED)
 set_target_properties(skia-lib PROPERTIES IMPORTED_LOCATION
-        ${RIVE_RUNTIME_DIR}/skia/dependencies/skia/out/macosx/${RIVE_ARCH}/libskia.a
+        ${RIVE_RUNTIME_DIR}/skia/dependencies/skia/out/${SKIA_OS}/${RIVE_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}skia${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 target_link_libraries(rive-desktop skia-lib)
 
@@ -199,6 +255,27 @@ if (APPLE)
             "-framework Foundation"
             "-framework AppKit"
     )
+elseif (NOT WIN32)
+    target_link_options(rive-desktop PRIVATE
+            # The static libs reference each other in both directions (librive's
+            # scripting bindings use the renderer, which is built on librive),
+            # which a linker that reads them once, in order, cannot resolve.
+            # The group is closed below, after the last of them.
+            -Wl,--start-group
+            # Fail the build on a missing symbol rather than the first load
+            -Wl,--no-undefined
+            # Keep the static libs' symbols out of the dynamic symbol table, so
+            # they can neither clash with nor be replaced by another library's
+            -Wl,--exclude-libs,ALL
+            -Wl,--gc-sections
+            # Depend on glibc alone, not on the build machine's C++ runtime
+            -static-libstdc++
+            -static-libgcc)
+    target_link_libraries(rive-desktop
+            -Wl,--end-group
+            dl
+            pthread
+            m)
 endif ()
 
 find_package(JNI REQUIRED)
