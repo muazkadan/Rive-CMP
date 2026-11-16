@@ -6,6 +6,9 @@
 #include "helpers/rive_log.hpp"
 #include "rive/file.hpp"
 
+#include <climits>
+#include <cstdint>
+
 namespace rive_desktop {
     /**
      * Global factories that are used to instantiate render objects (paths, buffers,
@@ -141,6 +144,6 @@ namespace rive_desktop {
             RiveLogW("RiveN/JIntToSizeT", "Value is a negative number %d", jintValue);
             return 0;
         }
-        return jintValue > SIZE_T_MAX ? SIZE_T_MAX : static_cast<size_t>(jintValue);
+        return jintValue > SIZE_MAX ? SIZE_MAX : static_cast<size_t>(jintValue);
     }
 } // namespace rive_desktop

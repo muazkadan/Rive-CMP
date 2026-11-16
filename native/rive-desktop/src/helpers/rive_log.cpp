@@ -2,6 +2,7 @@
 #include "helpers/general.hpp"
 #include "helpers/jni_resource.hpp"
 #include <cstdio>
+#include <mutex>
 
 // Bootstrap stderr fallback, used only before RiveLog's JNI bridge is
 // initialized or when it fails. Everything else must go through RiveLog*.
